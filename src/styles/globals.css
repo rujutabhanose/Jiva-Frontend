@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Backgrounds */
+    --background: #F7F4EC;
+    --surface: #FFFBF2;
+    --header-bg: #2F5D3B;
+    
+    /* Text */
+    --foreground: #1F2933;
+    --text-secondary: #6B7280;
+    --text-on-dark: #F4F8F3;
+    --text-on-primary: #FEFCE8;
+    
+    /* Primary Green */
+    --primary: #3F7C4C;
+    --primary-hover: #356542;
+    --primary-active: #294C34;
+    --primary-light: #E3F2E5;
+    
+    /* Secondary Green-Blue */
+    --secondary: #6B8F7A;
+    --secondary-hover: #557263;
+    --secondary-light: #E0EBE5;
+    
+    /* Functional Colors */
+    --success: #3F7C4C;
+    --error: #B55C4C;
+    --error-alt: #C0152F;
+    --warning: #D08A4E;
+    --warning-alt: #A84B2F;
+    --info: #626C71;
+    
+    /* Borders */
+    --border: rgba(146, 120, 89, 0.30);
+    --border-card: rgba(146, 120, 89, 0.18);
+    --border-inner: rgba(146, 120, 89, 0.12);
+    
+    /* Secondary Surfaces */
+    --surface-secondary: rgba(146, 120, 89, 0.10);
+    --surface-secondary-hover: rgba(146, 120, 89, 0.18);
+    --surface-secondary-active: rgba(146, 120, 89, 0.24);
+    
+    /* Legacy compatibility */
+    --card: #FFFBF2;
+    --card-foreground: #1F2933;
+    --primary-foreground: #FEFCE8;
+    --secondary-foreground: #1F2933;
+    --muted: #E3F2E5;
+    --muted-foreground: #6B7280;
+    --accent: #6B8F7A;
+    --accent-foreground: #1F2933;
+    --destructive: #B55C4C;
+    --destructive-foreground: #FEFCE8;
+    --input: rgba(146, 120, 89, 0.30);
+    --ring: #3F7C4C;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

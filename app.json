@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "jiva-plants",
+    "slug": "jiva-plants",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jiva.plants",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Jiva Plants needs access to your camera to take photos of plants for health diagnosis.",
+        "NSPhotoLibraryUsageDescription": "Jiva Plants needs access to your photo library to upload plant photos for analysis.",
+        "NSPhotoLibraryAddUsageDescription": "Jiva Plants needs permission to save plant scan results to your photo library."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.jiva.plants",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Jiva Plants to access your camera to take photos of plants for diagnosis."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Jiva Plants to access your photos to upload plant images for analysis."
+        }
+      ]
+    ]
+  }
+}

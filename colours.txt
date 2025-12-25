@@ -1,0 +1,79 @@
+🎨 Primary Colors
+Backgrounds
+#F7F4EC - Main background (soft warm cream)
+#FFFBF2 - Card/surface background (lighter cream)
+#2F5D3B - Header/navigation background (deep forest green)
+Text
+#1F2933 - Primary text (deep charcoal)
+#6B7280 - Secondary text (soft grey)
+#F4F8F3 - Text on dark green backgrounds
+#FEFCE8 - Text on primary green buttons (soft off-white)
+🌿 Brand Colors (Plant Theme)
+Primary Green (Main actions, CTAs, links)
+#3F7C4C - Primary green (deep leaf green)
+#356542 - Hover state
+#294C34 - Active/pressed state
+#E3F2E5 - Light tint (backgrounds, highlights)
+Secondary Green-Blue (Muted sage/teal accents)
+#6B8F7A - Sage/teal
+#557263 - Hover state
+#E0EBE5 - Light tint
+🎯 Functional Colors
+Success (confirmations, positive states)
+#3F7C4C - Same as primary green
+Error (alerts, warnings)
+#B55C4C - Clay red
+#C0152F - Alternative red (darker)
+Warning (caution states)
+#D08A4E - Terracotta/orange
+#A84B2F - Alternative orange (darker)
+Info (neutral information)
+#626C71 - Slate grey
+🖼️ UI Elements
+Borders & Dividers
+rgba(146, 120, 89, 0.30) - Standard borders (tan)
+rgba(146, 120, 89, 0.18) - Card borders (lighter)
+rgba(146, 120, 89, 0.12) - Inner borders (subtlest)
+Secondary Surfaces (inactive buttons, backgrounds)
+rgba(146, 120, 89, 0.10) - Base
+rgba(146, 120, 89, 0.18) - Hover
+rgba(146, 120, 89, 0.24) - Active
+📐 Typography
+Font Families
+Primary: "Inter", -apple-system, system-ui
+Alternative: "Geist", "FKGroteskNeue"
+Monospace: SF Mono, system-mono
+Font Sizes
+11px - Extra small (labels, captions)
+12px - Small (secondary text)
+14px - Base/Body text
+16px - Large body
+18px - Subheadings
+20px - H3
+24px - H2
+30px - H1
+Font Weights
+400 - Regular
+500 - Medium
+550 - Semibold
+600 - Bold
+🎭 Design System Summary
+Theme: Light, warm, earthy with natural plant tones Aesthetic: Organic, sustainable, calming Color Temperature: Warm neutrals with cool green accents Contrast: Medium contrast for accessibility while maintaining soft appearance
+Quick Reference for Developers
+
+{
+  "colors": {
+    "background": "#F7F4EC",
+    "surface": "#FFFBF2",
+    "primary": "#3F7C4C",
+    "primaryDark": "#2F5D3B",
+    "text": "#1F2933",
+    "textSecondary": "#6B7280",
+    "textOnPrimary": "#FEFCE8",
+    "success": "#3F7C4C",
+    "error": "#B55C4C",
+    "warning": "#D08A4E",
+    "border": "rgba(146, 120, 89, 0.3)"
+  }
+}
+This color scheme creates a natural, plant-focused aesthetic perfect for the Jiva plant health app!
