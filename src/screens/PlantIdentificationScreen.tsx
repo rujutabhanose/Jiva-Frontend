@@ -113,11 +113,11 @@ export function PlantIdentificationScreen({
                   </Text>
                 </View>
 
-                <View className="space-y-2">
-                  <Text className="text-sm">💧 {plantInfo.careGuide.water}</Text>
-                  <Text className="text-sm">☀️ {plantInfo.careGuide.light}</Text>
-                  <Text className="text-sm">🌡 {plantInfo.careGuide.temperature}</Text>
-                  <Text className="text-sm">💦 {plantInfo.careGuide.humidity}</Text>
+                <View>
+                  <Text className="text-sm mb-2">💧 {plantInfo.careGuide.water}</Text>
+                  <Text className="text-sm mb-2">☀️ {plantInfo.careGuide.light}</Text>
+                  <Text className="text-sm mb-2">🌡 {plantInfo.careGuide.temperature}</Text>
+                  <Text className="text-sm mb-2">💦 {plantInfo.careGuide.humidity}</Text>
                   <Text className="text-sm">🌱 {plantInfo.careGuide.soil}</Text>
                 </View>
               </Card>
@@ -145,7 +145,7 @@ export function PlantIdentificationScreen({
         edges={['bottom']}
         className="bg-background border-t border-border"
       >
-        <View className="p-4 space-y-3">
+        <View className="p-4">
 
           {/* Save */}
           <Button
@@ -156,7 +156,7 @@ export function PlantIdentificationScreen({
               setIsSaving(false);
             }}
             disabled={isSaving}
-            className="h-12 rounded-xl flex-row items-center justify-center gap-2 px-4"
+            className="h-12 rounded-xl flex-row items-center justify-center gap-2 px-4 mb-3"
           >
             <BookmarkPlus size={18} color="#3F7C4C" />
             <Text className="text-primary font-medium">

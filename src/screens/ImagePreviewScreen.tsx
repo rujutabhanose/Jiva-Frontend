@@ -41,10 +41,10 @@ export function ImagePreviewScreen({
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="px-6 pt-6 space-y-8">
+        <View className="px-6 pt-6">
 
           {/* Image Preview */}
-          <Card padding="none" className="overflow-hidden">
+          <Card padding="none" className="overflow-hidden mb-8">
             <ImageWithFallback
               src={image}
               alt="Plant photo preview"
@@ -54,19 +54,20 @@ export function ImagePreviewScreen({
           </Card>
 
           {/* Helper Text */}
-          <View className="pt-3">
+          <View className="pt-3 mb-8">
             <Text className="text-sm text-muted-foreground text-center leading-relaxed px-4">
               Make sure the plant is clearly visible and in good lighting for best results.
             </Text>
           </View>
 
           {/* Actions */}
-          <View className="pt-4 space-y-6">
+          <View className="pt-4">
             <Button
               variant="primary"
               size="lg"
               fullWidth
               onPress={onContinue}
+              className="mb-6"
             >
                 Continue
             </Button>

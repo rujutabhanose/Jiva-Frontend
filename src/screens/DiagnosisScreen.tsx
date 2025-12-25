@@ -109,10 +109,10 @@ export function DiagnosisScreen({
       <Header title="Diagnosis" showBack showBeta onBack={onBack} />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
-        <View className="max-w-lg mx-auto px-6 py-6 space-y-5">
+        <View className="max-w-lg mx-auto px-6 py-6">
 
           {/* IMAGE */}
-          <Card padding="none" className="overflow-hidden">
+          <Card padding="none" className="overflow-hidden mb-5">
             <ImageWithFallback
               src={image}
               alt="Diagnosed plant"
@@ -127,7 +127,7 @@ export function DiagnosisScreen({
           </Card>
 
           {/* DIAGNOSIS SUMMARY */}
-          <Card className="border-destructive/40">
+          <Card className="border-destructive/40 mb-5">
             <View className="flex-row gap-4">
               <View className="w-14 h-14 bg-destructive/15 rounded-2xl items-center justify-center">
                 <AlertTriangle size={26} color="#B55C4C" />
@@ -150,7 +150,7 @@ export function DiagnosisScreen({
           </Card>
 
           {/* SYMPTOMS */}
-          <Card>
+          <Card className="mb-5">
             <SectionHeader
               title="Identified Symptoms"
               icon={<Stethoscope size={16} color="#3F7C4C" />}
@@ -158,9 +158,9 @@ export function DiagnosisScreen({
               onPress={() => toggle('symptoms')}
             />
             {expanded.symptoms && (
-              <View className="space-y-2">
+              <View>
                 {symptoms.map((s, i) => (
-                  <View key={i} className="flex-row gap-2">
+                  <View key={i} className="flex-row gap-2 mb-2">
                     <Bullet />
                     <Text className="text-sm flex-1 leading-relaxed">
                       {s}
@@ -172,7 +172,7 @@ export function DiagnosisScreen({
           </Card>
 
           {/* CAUSES */}
-          <Card>
+          <Card className="mb-5">
             <SectionHeader
               title="Likely Causes"
               icon={<Target size={16} color="#3F7C4C" />}
@@ -180,9 +180,9 @@ export function DiagnosisScreen({
               onPress={() => toggle('causes')}
             />
             {expanded.causes && (
-              <View className="space-y-2">
+              <View>
                 {causes.map((c, i) => (
-                  <View key={i} className="flex-row gap-2">
+                  <View key={i} className="flex-row gap-2 mb-2">
                     <Bullet />
                     <Text className="text-sm flex-1 leading-relaxed">
                       {c}
@@ -195,7 +195,7 @@ export function DiagnosisScreen({
 
           {/* TREATMENT */}
           <Card
-  className="border-primary/30 bg-primary/5"
+  className="border-primary/30 bg-primary/5 mb-5"
   style={flatCardStyle}
 >
             <SectionHeader
@@ -206,9 +206,9 @@ export function DiagnosisScreen({
               onPress={() => toggle('treatment')}
             />
             {expanded.treatment && (
-              <View className="space-y-4">
+              <View>
                 {treatment.map((step, i) => (
-                  <View key={i} className="flex-row gap-3">
+                  <View key={i} className="flex-row gap-3 mb-4">
                     <Text className="w-6 text-primary font-semibold text-sm text-center">
   {i + 1}.
 </Text>
@@ -259,10 +259,7 @@ export function DiagnosisScreen({
             onPress={onScanAnother}
             disabled={isSaving}
           >
-            <ScanLine size={16} color="#FEFCE8" />
-            <Text className="text-on-primary font-medium">
               Scan Again
-            </Text>
           </Button>
         </View>
       </SafeAreaView>
