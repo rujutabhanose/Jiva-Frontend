@@ -64,6 +64,8 @@ xcuserdata/
 *.xccheckout
 DerivedData/
 *.ipa
+*.dSYM.zip
+*.dSYM
 
 # Logs
 *.log

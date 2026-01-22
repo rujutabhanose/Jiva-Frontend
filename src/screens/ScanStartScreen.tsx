@@ -10,19 +10,31 @@ interface ScanStartScreenProps {
   onBack: () => void;
   onCamera: () => void;
   onGallery: (imageData: string) => void;
+  mode?: 'identify' | 'diagnose';
 }
 
 export function ScanStartScreen({
   onBack,
   onCamera,
   onGallery,
+  mode = 'diagnose',
 }: ScanStartScreenProps) {
-  const tips = [
-    'Use good lighting – natural light works best',
-    'Focus on affected leaves or problem areas',
-    'Get close to show symptoms clearly',
-    'Avoid blurry or dark photos',
-  ];
+  const isIdentifyMode = mode === 'identify';
+
+  const tips = isIdentifyMode
+    ? [
+        'Capture the leaf of the plant clearly',
+        'Use good lighting – natural light works best',
+        'Include the full leaf in the frame',
+        'Avoid blurry or dark photos',
+      ]
+    : [
+        'Capture the affected leaf of the plant',
+        'Use good lighting – natural light works best',
+        'Focus on affected leaves or problem areas',
+        'Get close to show symptoms clearly',
+        'Avoid blurry or dark photos',
+      ];
 
   const handleGallery = async () => {
     try {
@@ -65,23 +77,25 @@ export function ScanStartScreen({
 
   return (
     <View className="flex-1 bg-background">
-      <Header title="Scan Plant" showBeta showBack onBack={onBack} />
+      <Header title={isIdentifyMode ? "Identify Plant" : "Diagnose Plant"} showBeta showBack onBack={onBack} />
 
       <ScrollView className="flex-1 px-6 py-6">
         {/* Intro */}
 <View className="mb-8">
   <Text className="text-xl font-semibold mb-1 text-foreground">
-    Capture your plant
+    {isIdentifyMode ? "Capture a leaf" : "Capture affected area"}
   </Text>
   <Text className="text-sm text-muted-foreground">
-    Take a clear photo or upload one — we’ll handle the rest
+    {isIdentifyMode
+      ? "Take a clear photo of a leaf — we'll identify your plant"
+      : "Take a clear photo of the problem area — we'll diagnose the issue"}
   </Text>
 </View>
 
         <TouchableOpacity onPress={onCamera} activeOpacity={0.85}>
   <Card
     padding="lg"
-    className="mb-4 bg-[#F2F7F1] border-[#D6E3D3]"
+    className="mb-4 bg-[#F2F6F5] border-[#D6E3D3]"
   >
     <View className="flex-row items-center">
       <View className="w-16 h-16 bg-[#E2EFE6] rounded-2xl items-center justify-center mr-4">
@@ -107,7 +121,7 @@ export function ScanStartScreen({
         <TouchableOpacity onPress={handleGallery} activeOpacity={0.85}>
   <Card
     padding="lg"
-    className="mb-10 bg-[#FBF7F2] border-[#E6DECF]"
+    className="mb-10 bg-[#F2F6F5] border-[#E6DECF]"
   >
     <View className="flex-row items-center">
       <View
@@ -137,7 +151,7 @@ export function ScanStartScreen({
 </TouchableOpacity>
 
         {/* TIPS */}
-        <Card className="bg-[#F6F3ED] border-[#E6DECF]">
+        <Card className="bg-[#F2F6F5] border-[#E6DECF]">
   <View className="flex-row">
     <View className="w-9 h-9 bg-[#EFE6D8] rounded-lg items-center justify-center mr-3">
       <Lightbulb size={16} color="#9A6B3E" strokeWidth={2} />

@@ -24,7 +24,7 @@ const USER_TYPE_OPTIONS = [
   { value: 'Other', label: 'Other', description: 'Other plant-related activities' },
 ];
 
-const PLANT_TYPE_OPTIONS = [
+const PLANT_TYPE_OPTIONS: { value: PlantType; label: string }[] = [
   { value: 'Houseplants', label: 'Houseplants' },
   { value: 'Vegetables', label: 'Vegetables' },
   { value: 'Fruits', label: 'Fruits' },
@@ -118,7 +118,7 @@ export function OnboardingScreen({
       >
         <View className="px-6 pt-6">
           <View
-  className="bg-card rounded-2xl px-6 py-8 border border-border"
+  className="bg-[#F2F6F5] rounded-2xl px-6 py-8 border border-border"
   style={{ gap: 32 }}
 >
 
@@ -163,7 +163,7 @@ export function OnboardingScreen({
   className={`${
     selected
       ? 'border-2 border-primary bg-primary/5'
-      : 'border border-border bg-card'
+      : 'border border-border bg-white'
   }`}
   style={{
     elevation: 0,                 // Android
@@ -213,11 +213,11 @@ export function OnboardingScreen({
                     <TouchableOpacity
                       key={option.value}
                       activeOpacity={0.7}
-                      onPress={() => togglePlantType(option.value as PlantType)}
+                      onPress={() => togglePlantType(option.value)}
                       className={`px-5 py-3 rounded-full border ${
                         selected
                           ? 'bg-primary border-primary'
-                          : 'bg-card border-border'
+                          : 'bg-white border-border'
                       }`}
                     >
                       <View className="flex-row items-center" style={{ gap: 6 }}>

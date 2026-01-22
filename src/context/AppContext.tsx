@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_ENDPOINTS } from '../config/api';
+import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
+import { storage } from '../utils/storage';
 
 interface Scan {
   id: string;
@@ -36,10 +37,12 @@ interface AppContextType {
   updateScanNotes: (scanId: string, notes: string) => void;
   deleteScan: (scanId: string) => Promise<void>;
   upgradeToPro: () => Promise<{ success: boolean; message: string }>;
+  cancelSubscription: () => Promise<{ success: boolean; message: string }>;
   redeemCoupon: (couponCode: string) => Promise<{ success: boolean; message: string }>;
   canScan: boolean;
   clearUserHistory: () => Promise<void>; // Clear history when switching users
   reloadUserData: () => Promise<void>; // Reload user data after login
+  incrementScansUsed: () => Promise<void>; // Increment scan count when diagnosis completes
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -75,14 +78,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const initializeUser = async () => {
       console.log('[AppContext] Starting initialization...');
       try {
+        // Generate or retrieve device ID first (needed for tracking and RevenueCat)
+        let storedUserId = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
+        if (!storedUserId) {
+          storedUserId = generateUserId();
+          await AsyncStorage.setItem(STORAGE_KEYS.USER_ID, storedUserId);
+        }
+        setUserId(storedUserId);
+        console.log('[AppContext] Device ID (for tracking/RevenueCat):', storedUserId);
+
         // Check if user is authenticated (has token)
         const TOKEN_KEY = 'jiva_auth_token';
         const token = await AsyncStorage.getItem(TOKEN_KEY);
 
+        console.log('[AppContext] Token retrieved:', token ? `${token.substring(0, 20)}...` : 'null');
+
         if (!token) {
           console.log('[AppContext] No authentication token found - user must login/register first');
-          // Set defaults for unauthenticated state
-          setUserId('');
+          // Set defaults for unauthenticated state (but keep userId for RevenueCat)
           setScansUsed(0);
           setIsPro(false);
           setHistory([]);
@@ -90,72 +103,57 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // Get or create device ID for tracking purposes
-        let storedUserId = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
-        if (!storedUserId) {
-          storedUserId = generateUserId();
-          await AsyncStorage.setItem(STORAGE_KEYS.USER_ID, storedUserId);
-        }
-        setUserId(storedUserId);
-        console.log('[AppContext] Device ID:', storedUserId);
-
-        // Sync with backend to get authenticated user data
+        // Fetch authenticated user's data from backend
         try {
-          console.log('[AppContext] Fetching from:', API_ENDPOINTS.GET_OR_CREATE_DEVICE_USER);
+          console.log('[AppContext] Fetching authenticated user profile');
+          console.log('[AppContext] Using token:', `Bearer ${token.substring(0, 20)}...`);
+          console.log('[AppContext] Profile endpoint:', API_ENDPOINTS.PROFILE);
+
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-          const response = await fetch(API_ENDPOINTS.GET_OR_CREATE_DEVICE_USER, {
-            method: 'POST',
+          const response = await fetch(API_ENDPOINTS.PROFILE, {
+            method: 'GET',
             headers: {
-              'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify({
-              device_id: storedUserId,
-            }),
             signal: controller.signal,
           });
 
           clearTimeout(timeoutId);
 
-          console.log('[AppContext] Response status:', response.status);
+          console.log('[AppContext] Profile response status:', response.status);
           if (response.ok) {
             const data = await response.json();
-            console.log('[AppContext] Backend data:', JSON.stringify(data, null, 2));
+            console.log('[AppContext] User profile data:', JSON.stringify(data, null, 2));
 
-            // DEBUG: Log isPro status from backend
-            console.log('[AppContext DEBUG] Backend is_premium value:', data.is_premium);
-            console.log('[AppContext DEBUG] Backend is_premium type:', typeof data.is_premium);
-            console.log('[AppContext DEBUG] Setting isPro to:', data.is_premium);
-
-            setScansUsed(data.scans_used);
-            setIsPro(data.is_premium);
+            setScansUsed(data.scans_used || 0);
+            setIsPro(data.is_premium || false);
 
             // Update local storage with backend data
-            await AsyncStorage.setItem(STORAGE_KEYS.SCANS_USED, data.scans_used.toString());
+            await AsyncStorage.setItem(STORAGE_KEYS.SCANS_USED, (data.scans_used || 0).toString());
             await AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, data.is_premium ? 'true' : 'false');
-
-            console.log('[AppContext DEBUG] AsyncStorage IS_PRO set to:', data.is_premium ? 'true' : 'false');
+          } else {
+            // If profile fetch fails (e.g., 401), fall back to local storage
+            console.warn('[AppContext] Profile fetch failed, using local storage');
+            const storedScansUsed = await AsyncStorage.getItem(STORAGE_KEYS.SCANS_USED);
+            const storedIsPro = await AsyncStorage.getItem(STORAGE_KEYS.IS_PRO);
+            setScansUsed(storedScansUsed ? parseInt(storedScansUsed, 10) : 0);
+            setIsPro(storedIsPro === 'true');
           }
         } catch (backendError: any) {
           // Don't fail the app if backend is unavailable - just use local storage
           if (backendError.name === 'AbortError') {
-            console.warn('[AppContext] Backend request timed out, using local storage');
+            console.warn('[AppContext] Profile request timed out, using local storage');
           } else {
             console.warn('[AppContext] Backend unavailable, using local storage:', backendError.message || 'Connection error');
           }
           // Fall back to local storage
           try {
             const storedScansUsed = await AsyncStorage.getItem(STORAGE_KEYS.SCANS_USED);
-            if (storedScansUsed) {
-              setScansUsed(parseInt(storedScansUsed, 10));
-            }
-
             const storedIsPro = await AsyncStorage.getItem(STORAGE_KEYS.IS_PRO);
-            if (storedIsPro === 'true') {
-              setIsPro(true);
-            }
+            setScansUsed(storedScansUsed ? parseInt(storedScansUsed, 10) : 0);
+            setIsPro(storedIsPro === 'true');
           } catch (storageError) {
             console.error('[AppContext] Error reading from storage:', storageError);
             // Use default values
@@ -180,20 +178,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
           if (response.ok) {
             const backendScans = await response.json();
             // Convert backend scan format to app format
-            const convertedScans = backendScans.map((scan: any) => ({
-              id: scan.id.toString(),
-              image: scan.image_url || '',
-              condition: scan.condition_name,
-              plant_name: scan.mode === 'identification' ? scan.condition_name : undefined,
-              confidence: scan.confidence * 100, // Convert from 0-1 to 0-100
-              date: new Date(scan.created_at),
-              symptoms: scan.symptoms || [],
-              causes: scan.causes || [],
-              treatment: scan.treatment || [],
-              notes: scan.notes || '',
-              mode: scan.mode || 'diagnosis',
-              user_id: userId, // Add current user_id to scans
-            }));
+            const convertedScans = backendScans.map((scan: any) => {
+              // Convert relative image URLs to full URLs
+              let imageUrl = scan.image_url || '';
+              if (imageUrl && imageUrl.startsWith('/uploads/')) {
+                imageUrl = `${API_BASE_URL}${imageUrl}`;
+              }
+
+              return {
+                id: scan.id.toString(),
+                image: imageUrl,
+                condition: scan.condition_name,
+                plant_name: scan.mode === 'identification' ? scan.condition_name : undefined,
+                confidence: scan.confidence * 100, // Convert from 0-1 to 0-100
+                date: new Date(scan.created_at),
+                symptoms: scan.symptoms || [],
+                causes: scan.causes || [],
+                treatment: scan.treatment || [],
+                notes: scan.notes || '',
+                mode: scan.mode || 'diagnosis',
+                user_id: userId, // Add current user_id to scans
+              };
+            });
             setHistory(convertedScans);
             // Update local storage with backend data
             await AsyncStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(convertedScans));
@@ -248,36 +254,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     initializeUser();
   }, []);
 
-  // Sync scan count to backend
-  const syncScanCountToBackend = async (newCount: number) => {
-    try {
-      const response = await fetch(API_ENDPOINTS.UPDATE_SCAN_COUNT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          device_id: userId,
-          scan_count: newCount,
-        }),
-      });
-
-      if (!response.ok) {
-        // Try to parse error, but don't throw
-        try {
-          const errorData = await response.json();
-          console.error('Failed to sync scan count to backend:', errorData.detail || errorData.message);
-        } catch {
-          console.error('Failed to sync scan count to backend:', response.status);
-        }
-      }
-    } catch (error: any) {
-      // Log but don't throw - app should continue working even if sync fails
-      console.error('Error syncing scan count:', error);
-      // Continue even if backend sync fails - app should never crash
-    }
-  };
-
   const saveScan = async (scan: Scan, backendMeta?: any) => {
     // Try to save scan to backend first
     let backendScanId: number | null = null;
@@ -289,29 +265,87 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const token = await storage.getToken();
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout (increased for image upload)
+
+      // Create FormData for multipart upload with image
+      const formData = new FormData();
+      formData.append('device_id', userId);
+      formData.append('mode', scan.mode || 'diagnosis');
+      formData.append('condition_name', scan.condition || scan.plant_name || 'Unknown');
+      formData.append('confidence', (scan.confidence ? (scan.confidence > 1 ? scan.confidence / 100 : scan.confidence) : 0).toString());
+
+      if (scan.diagnosis_data) {
+        formData.append('diagnosis_data', JSON.stringify(scan.diagnosis_data));
+      }
+      if (scan.symptoms) {
+        formData.append('symptoms', JSON.stringify(scan.symptoms));
+      }
+      if (scan.causes) {
+        formData.append('causes', JSON.stringify(scan.causes));
+      }
+      if (scan.treatment) {
+        formData.append('treatment', JSON.stringify(scan.treatment));
+      }
+      if (scan.notes) {
+        formData.append('notes', scan.notes);
+      }
+      if (scan.category) {
+        formData.append('category', scan.category);
+      }
+      if (scan.severity) {
+        formData.append('severity', scan.severity);
+      }
+      if (scan.health_score !== undefined && scan.health_score !== null) {
+        formData.append('health_score', scan.health_score.toString());
+      }
+
+      // Handle image upload
+      let imageUploadedSuccessfully = false;
+      if (scan.image) {
+        try {
+          // React Native FormData handles both data URIs and file URIs the same way
+          // Just pass an object with uri, type, and name
+
+          // Extract mime type and filename
+          let mimeType = 'image/jpeg';
+          let filename = 'scan-image.jpg';
+
+          if (scan.image.startsWith('data:image')) {
+            // For data URIs, extract mime type from the URI
+            const mimeMatch = scan.image.match(/data:(.*?);/);
+            if (mimeMatch) {
+              mimeType = mimeMatch[1];
+            }
+            filename = `scan-${Date.now()}.jpg`;
+          } else if (scan.image.startsWith('file://')) {
+            // For file URIs, extract filename
+            const parts = scan.image.split('/');
+            filename = parts[parts.length - 1] || 'scan-image.jpg';
+          }
+
+          // React Native's FormData accepts both data URIs and file URIs in the same format
+          formData.append('image', {
+            uri: scan.image,
+            type: mimeType,
+            name: filename,
+          } as any);
+
+          imageUploadedSuccessfully = true;
+          console.log('[AppContext] Image prepared for upload:', filename, 'type:', mimeType);
+        } catch (imageError) {
+          console.error('[AppContext] Failed to process image for upload:', imageError);
+          // Don't throw - allow saving locally with the original image URI
+          console.warn('[AppContext] Will attempt to save scan locally with original image');
+        }
+      }
 
       const response = await fetch(API_ENDPOINTS.CREATE_SCAN, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` }),
+          // Don't set Content-Type - let browser set it with boundary for multipart
         },
-        body: JSON.stringify({
-          device_id: userId,
-          mode: scan.mode || 'diagnosis',
-          image_url: scan.image || null,
-          condition_name: scan.condition || scan.plant_name || 'Unknown',
-          confidence: scan.confidence ? (scan.confidence > 1 ? scan.confidence / 100 : scan.confidence) : 0, // Backend expects 0-1 range, convert if in 0-100
-          diagnosis_data: scan.diagnosis_data || null,
-          symptoms: scan.symptoms || [],
-          causes: scan.causes || [],
-          treatment: scan.treatment || [],
-          notes: scan.notes || '',
-          category: scan.category || null,
-          severity: scan.severity || null,
-          health_score: scan.health_score || null,
-        }),
+        body: formData,
         signal: controller.signal,
       });
 
@@ -323,16 +357,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
           if (backendScan && typeof backendScan.id === 'number' && backendScan.id > 0) {
             const newBackendScanId = backendScan.id;
             backendScanId = newBackendScanId;
+
+            // Validate that image was saved if we uploaded one
+            if (imageUploadedSuccessfully && !backendScan.image_url) {
+              console.warn('[AppContext] Backend failed to save image despite successful upload - will use local image');
+            }
+
+            // Use backend image_url if provided, otherwise keep local image
+            let imageUrl = backendScan.image_url || scan.image;
+            // Convert relative image URLs to full URLs
+            if (imageUrl && imageUrl.startsWith('/uploads/')) {
+              imageUrl = `${API_BASE_URL}${imageUrl}`;
+            }
+
+            // Warn if no image URL (but don't fail the save)
+            if (!imageUrl || imageUrl.trim() === '') {
+              console.warn('[AppContext] No valid image URL after backend save - scan will be saved without image');
+              imageUrl = ''; // Explicitly set to empty string
+            }
+
             // Use backend ID instead of local ID and remove pendingSync flag
-            scan = { ...scan, id: newBackendScanId.toString(), pendingSync: false };
+            scan = { ...scan, id: newBackendScanId.toString(), image: imageUrl, pendingSync: false };
             savedToBackend = true;
-            console.log('[AppContext] Scan saved to backend with ID:', newBackendScanId);
+            console.log('[AppContext] Scan saved to backend with ID:', newBackendScanId, 'Image URL:', imageUrl || '(none)');
           } else {
             console.warn('[AppContext] Invalid response format from backend');
           }
         } catch (parseError) {
           console.error('[AppContext] Error parsing backend response:', parseError);
-          // Continue with local scan
+          // Don't re-throw - allow fallback to local storage
+          console.warn('[AppContext] Will fall back to local storage');
         }
       } else {
         console.warn('[AppContext] Failed to save scan to backend, using local ID');
@@ -385,16 +439,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       throw new Error('Failed to save scan locally');
     }
 
-    // Increment scan counter for diagnosis scans (identification is free)
-    if (scan.mode === 'diagnosis') {
-      console.log('[AppContext] Incrementing scan counter for diagnosis scan');
-      const newScansUsed = scansUsed + 1;
-      setScansUsed(newScansUsed);
-      await AsyncStorage.setItem(STORAGE_KEYS.SCANS_USED, newScansUsed.toString());
-
-      // Sync to backend
-      syncScanCountToBackend(newScansUsed);
-    }
+    // Note: Scan counter is now incremented when analysis completes (in incrementScansUsed),
+    // not when saving. This ensures users can't bypass the limit by not saving.
 
     if (backendMeta) {
       setIsPro(backendMeta.is_premium);
@@ -434,16 +480,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (!isLikelyTimestamp) {
           // Likely a backend ID, sync to backend
           try {
+            // Get auth token for authenticated request
+            const { storage } = await import('../utils/storage');
+            const token = await storage.getToken();
+
+            const headers: HeadersInit = {
+              'Content-Type': 'application/json',
+            };
+
+            if (token) {
+              headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(API_ENDPOINTS.UPDATE_SCAN_NOTES(numericId), {
               method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers,
               body: JSON.stringify({ notes }),
             });
 
             if (!response.ok) {
-              console.warn('[AppContext] Failed to sync notes to backend, scan may not exist on backend');
+              console.warn('[AppContext] Failed to sync notes to backend (status:', response.status, ')');
             }
           } catch (error) {
             console.error('Error syncing notes to backend:', error);
@@ -483,14 +539,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!isLikelyTimestamp) {
         // Likely a backend ID, delete from backend
         try {
+          // Get auth token for authenticated request
+          const { storage } = await import('../utils/storage');
+          const token = await storage.getToken();
+
+          const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+          };
+
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+
           const response = await fetch(API_ENDPOINTS.DELETE_SCAN(numericId), {
             method: 'DELETE',
+            headers,
           });
 
           if (response.ok) {
             console.log('[AppContext] Scan deleted from backend successfully');
           } else {
-            console.warn('[AppContext] Failed to delete scan from backend, it may not exist');
+            console.warn('[AppContext] Failed to delete scan from backend (status:', response.status, ')');
           }
         } catch (error) {
           console.error('[AppContext] Error deleting scan from backend:', error);
@@ -504,17 +573,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const upgradeToPro = async (): Promise<{ success: boolean; message: string }> => {
     try {
-      // Call backend first with timeout
+      // Call backend with timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      // Require authentication for upgrade
+      const token = await storage.getToken();
+
+      if (!token) {
+        return {
+          success: false,
+          message: 'Please log in to upgrade to Pro',
+        };
+      }
 
       const response = await fetch(API_ENDPOINTS.UPGRADE_TO_PRO, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          device_id: userId,
           plan: 'pro',
         }),
         signal: controller.signal,
@@ -575,15 +654,117 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const cancelSubscription = async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      // Call backend with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      // Require authentication for subscription management
+      const token = await storage.getToken();
+
+      if (!token) {
+        return {
+          success: false,
+          message: 'Please log in to manage your subscription',
+        };
+      }
+
+      const response = await fetch(API_ENDPOINTS.CANCEL_SUBSCRIPTION, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      // Parse response
+      let data: any;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        if (!response.ok) {
+          return {
+            success: false,
+            message: `Failed to cancel subscription (${response.status}). Please try again.`,
+          };
+        }
+        data = {};
+      }
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.detail || data.message || `Failed to cancel subscription (${response.status})`,
+        };
+      }
+
+      // Backend confirmed cancellation - now update local state
+      console.log('[AppContext DEBUG] cancelSubscription - Setting isPro to false');
+      setIsPro(false);
+      await AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, 'false');
+
+      // Reset scans used based on backend response
+      if (data.scans_used !== undefined) {
+        setScansUsed(data.scans_used);
+        await AsyncStorage.setItem(STORAGE_KEYS.SCANS_USED, data.scans_used.toString());
+      } else if (data.free_scans_left !== undefined) {
+        // Fallback: calculate from free_scans_left if scans_used not provided
+        const newScansUsed = Math.max(0, 1 - data.free_scans_left);
+        setScansUsed(newScansUsed);
+        await AsyncStorage.setItem(STORAGE_KEYS.SCANS_USED, newScansUsed.toString());
+      }
+
+      console.log('[AppContext DEBUG] cancelSubscription - Updated AsyncStorage to false');
+
+      return {
+        success: true,
+        message: data.message || 'Subscription cancelled successfully',
+      };
+    } catch (error: any) {
+      console.error('Error cancelling subscription:', error);
+
+      // Categorize error for user-friendly message
+      let errorMessage = 'Failed to cancel subscription';
+
+      if (error.name === 'AbortError') {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+      } else if (error.message?.includes('fetch') || error.message?.includes('network')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      return {
+        success: false,
+        message: errorMessage,
+      };
+    }
+  };
+
   const redeemCoupon = async (couponCode: string): Promise<{ success: boolean; message: string }> => {
     try {
+      // Get authentication token
+      const { storage } = await import('../utils/storage');
+      const token = await storage.getToken();
+
+      if (!token) {
+        return {
+          success: false,
+          message: 'Please log in to redeem coupon codes',
+        };
+      }
+
       const response = await fetch(API_ENDPOINTS.REDEEM_COUPON, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          device_id: userId,
           coupon_code: couponCode,
         }),
       });
@@ -685,20 +866,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Fetch user data from backend
+      // Fetch authenticated user's profile from backend
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-        const response = await fetch(API_ENDPOINTS.GET_OR_CREATE_DEVICE_USER, {
-          method: 'POST',
+        console.log('[AppContext] reloadUserData - Fetching profile for authenticated user');
+        const response = await fetch(API_ENDPOINTS.PROFILE, {
+          method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            device_id: storedUserId,
-          }),
           signal: controller.signal,
         });
 
@@ -706,10 +884,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         if (response.ok) {
           const data = await response.json();
-          setScansUsed(data.scans_used);
-          setIsPro(data.is_premium);
-          await AsyncStorage.setItem(STORAGE_KEYS.SCANS_USED, data.scans_used.toString());
-          await AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, data.is_premium ? 'true' : 'false');
+          console.log('[AppContext] reloadUserData - Profile data:', JSON.stringify(data, null, 2));
+
+          // Use free_scans_left if available, otherwise fall back to scans_used
+          const scansUsed = data.scans_used !== undefined ? data.scans_used : 0;
+          const isPremium = data.is_premium || false;
+
+          setScansUsed(scansUsed);
+          setIsPro(isPremium);
+          await AsyncStorage.setItem(STORAGE_KEYS.SCANS_USED, scansUsed.toString());
+          await AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, isPremium ? 'true' : 'false');
+
+          console.log('[AppContext] reloadUserData - Updated isPro to:', isPremium);
+        } else {
+          console.warn('[AppContext] reloadUserData - Profile fetch failed with status:', response.status);
         }
       } catch (error) {
         console.warn('[AppContext] Error reloading user data:', error);
@@ -731,20 +919,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         if (response.ok) {
           const backendScans = await response.json();
-          const convertedScans = backendScans.map((scan: any) => ({
-            id: scan.id.toString(),
-            image: scan.image_url || '',
-            condition: scan.condition_name,
-            plant_name: scan.mode === 'identification' ? scan.condition_name : undefined,
-            confidence: scan.confidence * 100,
-            date: new Date(scan.created_at),
-            symptoms: scan.symptoms || [],
-            causes: scan.causes || [],
-            treatment: scan.treatment || [],
-            notes: scan.notes || '',
-            mode: scan.mode || 'diagnosis',
-            user_id: storedUserId,
-          }));
+          const convertedScans = backendScans.map((scan: any) => {
+            // Convert relative image URLs to full URLs
+            let imageUrl = scan.image_url || '';
+            if (imageUrl && imageUrl.startsWith('/uploads/')) {
+              imageUrl = `${API_BASE_URL}${imageUrl}`;
+            }
+
+            return {
+              id: scan.id.toString(),
+              image: imageUrl,
+              condition: scan.condition_name,
+              plant_name: scan.mode === 'identification' ? scan.condition_name : undefined,
+              confidence: scan.confidence * 100,
+              date: new Date(scan.created_at),
+              symptoms: scan.symptoms || [],
+              causes: scan.causes || [],
+              treatment: scan.treatment || [],
+              notes: scan.notes || '',
+              mode: scan.mode || 'diagnosis',
+              user_id: storedUserId,
+            };
+          });
           setHistory(convertedScans);
           await AsyncStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(convertedScans));
         }
@@ -754,6 +950,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('[AppContext] Error in reloadUserData:', error);
     }
+  };
+
+  // Increment scan count when a diagnosis analysis completes (regardless of save)
+  // For authenticated users, scan count is tracked via the scan records in the backend
+  const incrementScansUsed = async () => {
+    if (isPro) {
+      console.log('[AppContext] User is Pro, not incrementing scan count');
+      return;
+    }
+
+    console.log('[AppContext] Incrementing scan counter for completed diagnosis');
+    const newScansUsed = scansUsed + 1;
+    setScansUsed(newScansUsed);
+    await AsyncStorage.setItem(STORAGE_KEYS.SCANS_USED, newScansUsed.toString());
   };
 
   // Provide default values during loading so useApp() doesn't throw
@@ -774,10 +984,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateScanNotes,
         deleteScan,
         upgradeToPro,
+        cancelSubscription,
         redeemCoupon,
         canScan,
         clearUserHistory,
         reloadUserData,
+        incrementScansUsed,
       }}
     >
       {children}

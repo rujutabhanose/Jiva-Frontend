@@ -74,7 +74,6 @@ export function ImageWithFallback({
         style={[
           styles.image,
           isLoading && styles.hidden,
-          style,
         ]}
         resizeMode="cover"
         onLoad={handleLoad}

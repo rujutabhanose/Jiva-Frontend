@@ -57,7 +57,7 @@ export function ConditionDetailScreen({ condition, onBack, onScanForThis }: Cond
       <ScrollView className="flex-1">
         <View className="max-w-lg mx-auto px-6 py-6 space-y-4">
           {/* Overview */}
-          <Card>
+          <Card className="bg-[#F2F6F5]">
             <View className="flex items-start gap-3 mb-3">
               <View className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Eye size={20} color="#3F7C4C" strokeWidth={2} />
@@ -68,7 +68,7 @@ export function ConditionDetailScreen({ condition, onBack, onScanForThis }: Cond
           </Card>
 
           {/* Symptoms */}
-          <Card>
+          <Card className="bg-[#F2F6F5]">
             <View className="flex items-start gap-3 mb-3">
               <View className="w-10 h-10 bg-destructive/10 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Stethoscope size={20} color="#B55C4C" strokeWidth={2} />
@@ -86,7 +86,7 @@ export function ConditionDetailScreen({ condition, onBack, onScanForThis }: Cond
           </Card>
 
           {/* Causes */}
-          <Card>
+          <Card className="bg-[#F2F6F5]">
             <View className="flex items-start gap-3 mb-3">
               <View className="w-10 h-10 bg-warning/10 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Target size={20} color="#D08A4E" strokeWidth={2} />

@@ -9,7 +9,7 @@ import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { AuthScreen } from "./types";
 import Toast from "react-native-toast-message";
 import { storage, UserType, PlantType } from "../utils/storage";
-import { registerUser, loginUser } from "../services/api";
+import { registerUser, loginUser, updateUserProfile } from "../services/api";
 
 interface AuthNavigatorProps {
   onAuthenticated: (token?: string) => void;
@@ -18,6 +18,8 @@ interface AuthNavigatorProps {
 export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
   const [currentScreen, setCurrentScreen] = React.useState<AuthScreen>('welcome');
   const [userName, setUserName] = React.useState<string>('');
+  const [signInLoading, setSignInLoading] = React.useState(false);
+  const [signInError, setSignInError] = React.useState<string | null>(null);
 
   const handleGetStarted = () => {
     setCurrentScreen('register');
@@ -25,6 +27,8 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
 
   const handleSignIn = async (email: string, password: string) => {
     console.log('[AuthNavigator] Sign in with:', email);
+    setSignInLoading(true);
+    setSignInError(null);
 
     try {
       // Call backend API to authenticate user
@@ -55,12 +59,14 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
 
       console.log('[AuthNavigator DEBUG] Login - Set isPro in AsyncStorage to:', isPro);
       console.log('[AuthNavigator] Sign in successful, name:', authResponse.user.name);
+      setSignInLoading(false);
       Toast.show({ type: 'success', text1: `Welcome, ${authResponse.user.name}!` });
       onAuthenticated(authResponse.access_token);
     } catch (error: any) {
       console.error('[AuthNavigator] Error during sign in:', error);
       const errorMessage = error.userFriendlyError?.message || error.message || 'Sign in failed';
-      Toast.show({ type: 'error', text1: 'Sign in failed', text2: errorMessage });
+      setSignInLoading(false);
+      setSignInError(errorMessage);
     }
   };
 
@@ -131,9 +137,22 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
     console.log('[AuthNavigator] Onboarding complete with:', { userType, plantTypes });
 
     try {
-      // Save onboarding data
-      console.log('[AuthNavigator] Saving onboarding data...');
+      // Save onboarding data locally first
+      console.log('[AuthNavigator] Saving onboarding data locally...');
       await storage.updateOnboardingData(userType, plantTypes);
+
+      // Sync preferences to backend so they persist across logins
+      console.log('[AuthNavigator] Syncing preferences to backend...');
+      try {
+        await updateUserProfile({
+          userType: userType,
+          plantTypes: plantTypes as string[],
+        });
+        console.log('[AuthNavigator] Preferences synced to backend successfully');
+      } catch (syncError) {
+        // Don't fail onboarding if backend sync fails - local storage is enough for now
+        console.warn('[AuthNavigator] Failed to sync preferences to backend:', syncError);
+      }
 
       console.log('[AuthNavigator] Onboarding data saved successfully');
       Toast.show({ type: 'success', text1: 'Profile updated!' });
@@ -174,6 +193,8 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
           onSignIn={handleSignIn}
           onBack={() => setCurrentScreen('welcome')}
           onRegister={() => setCurrentScreen('register')}
+          isLoading={signInLoading}
+          error={signInError}
         />
       )}
 

@@ -109,7 +109,7 @@ export function LearnScreen({ onNavigate, onConditionSelect }: LearnScreenProps)
                   key={condition.id}
                   onPress={() => onConditionSelect(condition.id)}
                 >
-                  <Card padding="md">
+                  <Card padding="md" className="bg-[#F2F6F5]">
                     <View className="flex items-start gap-3">
                       <View className={`w-12 h-12 bg-${condition.color}/10 rounded-xl flex items-center justify-center flex-shrink-0`}>
                         <Icon size={24} color={getIconColor(condition.color)} strokeWidth={2} />

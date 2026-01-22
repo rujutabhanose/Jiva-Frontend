@@ -47,13 +47,23 @@ export function HistoryDetailScreen({
       if (isNaN(dateObj.getTime())) {
         return 'Invalid date';
       }
-      return dateObj.toLocaleDateString('en-US', {
+
+      // Format the date with time
+      const formattedDate = dateObj.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
       });
+
+      // Get timezone offset in hours
+      const timezoneOffset = -dateObj.getTimezoneOffset() / 60;
+      const gmtString = timezoneOffset >= 0
+        ? `GMT+${timezoneOffset}`
+        : `GMT${timezoneOffset}`;
+
+      return `${formattedDate} (${gmtString})`;
     } catch (error) {
       console.error('[HistoryDetailScreen] Error formatting date:', error);
       return 'Unknown date';
@@ -79,107 +89,115 @@ export function HistoryDetailScreen({
       <ScrollView className="flex-1">
         <View className="max-w-lg mx-auto px-6 py-6 space-y-4">
           {/* Image */}
-          <Card padding="none">
-            <ImageWithFallback
-              src={scan.image}
-              alt={scan.condition || scan.plant_name || 'Plant scan'}
-              className="w-full object-cover rounded-xl"
-              style={{ height: 256 }}
-            />
-          </Card>
+          <Card padding="none" className="shadow-none">
+  <ImageWithFallback
+    src={scan.image}
+    alt={scan.condition || scan.plant_name || 'Plant scan'}
+    className="w-full object-cover rounded-2xl"
+    style={{ height: 260 }}
+  />
+</Card>
+
 
           {/* Condition */}
-          <Card>
-            <Text className="text-xl font-bold mb-2">
-              {scan.condition || scan.plant_name || 'Unknown'}
-            </Text>
-            <View className="flex flex-row items-center gap-2 mb-2">
-              <Badge variant={scan.confidence >= 80 ? 'success' : 'warning'}>
-                Confidence: {scan.confidence}%
-              </Badge>
-              {scan.mode && (
-                <Badge variant="default">
-                  {scan.mode === 'identification' ? 'Identification' : 'Diagnosis'}
-                </Badge>
-              )}
-            </View>
-            <Text className="text-sm text-muted-foreground">
-              Scanned on {formatDate(scan.date)}
-            </Text>
-          </Card>
+          <Card className="bg-[#F2F6F5] space-y-3">
+  <Text className="text-xl font-bold text-foreground">
+    {scan.condition || scan.plant_name || 'Unknown'}
+  </Text>
+
+  <View className="flex flex-row flex-wrap items-center gap-2">
+    <Badge variant={scan.confidence >= 80 ? 'success' : 'warning'}>
+      {Math.round(scan.confidence)}% confidence
+    </Badge>
+
+    {scan.mode && (
+      <Badge variant="default">
+        {scan.mode === 'identification' ? 'Identification' : 'Diagnosis'}
+      </Badge>
+    )}
+  </View>
+
+  <Text className="text-xs text-muted-foreground">
+    Scanned on {formatDate(scan.date)}
+  </Text>
+</Card>
 
           {/* Treatment Summary - Only show for diagnosis with treatment data */}
           {scan.mode === 'diagnosis' && scan.treatment && scan.treatment.length > 0 && (
-            <Card className="bg-primary/5 border-primary/20">
-              <Text className="text-lg font-semibold mb-3">Treatment Steps</Text>
-              <View className="space-y-2">
-                {scan.treatment.map((step, index) => (
-                  <View key={index} className="flex flex-row items-start gap-2">
-                    <View className="w-5 h-5 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                      <Text className="text-on-primary text-xs font-semibold">
-                        {index + 1}
-                      </Text>
-                    </View>
-                    <Text className="text-sm flex-1">{step}</Text>
-                  </View>
-                ))}
-              </View>
-            </Card>
-          )}
+  <Card className="bg-primary/5 border-primary/15 shadow-none">
+    <Text className="text-lg font-semibold mb-4">
+      Treatment Steps
+    </Text>
+
+    <View className="space-y-3">
+      {scan.treatment.map((step, index) => (
+        <View key={index} className="flex flex-row items-start gap-3">
+          <View className="px-2 py-0.5 rounded-full bg-primary/15 flex-shrink-0">
+            <Text className="text-xs font-medium text-primary">
+              {index + 1}
+            </Text>
+          </View>
+
+          <Text className="text-sm leading-5 text-foreground flex-1">
+            {step}
+          </Text>
+        </View>
+      ))}
+    </View>
+  </Card>
+)}
 
           {/* Notes Section */}
-          <Card>
-            <View className="flex flex-row items-center justify-between mb-3">
-              <Text className="text-lg font-semibold">Your Notes</Text>
-              {!isEditingNotes && (
-                <TouchableOpacity
-                  onPress={() => setIsEditingNotes(true)}
-                  className="p-2 -mr-2 rounded-lg"
-                >
-                  <Edit3 size={16} color="#3F7C4C" strokeWidth={2} />
-                </TouchableOpacity>
-              )}
-            </View>
+          <Card className="bg-[#F2F6F5]">
+  <View className="flex flex-row items-center justify-between mb-3">
+    <Text className="text-lg font-semibold">
+      Your Notes
+    </Text>
 
-            {isEditingNotes ? (
-              <View className="space-y-3">
-                <TextInput
-                  value={notes}
-                  onChangeText={setNotes}
-                  placeholder="What did you do? Did the plant recover?"
-                  multiline
-                  numberOfLines={4}
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-background min-h-24"
-                  textAlignVertical="top"
-                />
-                <View className="flex flex-row gap-2">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onPress={handleSaveNotes}
-                    className="flex-1"
-                  >
-                    <Text className="text-on-primary font-medium">Save Notes</Text>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onPress={() => {
-                      setNotes(scan.notes || '');
-                      setIsEditingNotes(false);
-                    }}
-                    className="flex-1"
-                  >
-                    <Text className="text-primary font-medium">Cancel</Text>
-                  </Button>
-                </View>
-              </View>
-            ) : (
-              <Text className="text-sm text-muted-foreground">
-                {scan.notes || 'No notes yet. Add notes to track your plant\'s progress.'}
-              </Text>
-            )}
-          </Card>
+    {!isEditingNotes && (
+      <TouchableOpacity
+        onPress={() => setIsEditingNotes(true)}
+        className="p-2 rounded-full bg-muted"
+      >
+        <Edit3 size={16} color="#3F7C4C" strokeWidth={2} />
+      </TouchableOpacity>
+    )}
+  </View>
+
+  {isEditingNotes ? (
+    <View className="space-y-3">
+      <TextInput
+        value={notes}
+        onChangeText={setNotes}
+        placeholder="What did you do? Did the plant recover?"
+        multiline
+        className="w-full px-3 py-3 rounded-xl border border-border bg-background min-h-28 text-sm"
+        textAlignVertical="top"
+      />
+
+      <View className="flex flex-row gap-2">
+        <Button variant="primary" size="sm" onPress={handleSaveNotes} className="flex-1">
+          <Text className="text-on-primary font-medium">Save</Text>
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onPress={() => {
+            setNotes(scan.notes || '');
+            setIsEditingNotes(false);
+          }}
+          className="flex-1"
+        >
+          <Text className="text-primary font-medium">Cancel</Text>
+        </Button>
+      </View>
+    </View>
+  ) : (
+    <Text className="text-sm text-muted-foreground leading-5">
+      {scan.notes || 'No notes yet. Add notes to track recovery and treatment progress.'}
+    </Text>
+  )}
+</Card>
         </View>
       </ScrollView>
     </View>

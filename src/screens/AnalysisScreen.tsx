@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -27,6 +27,7 @@ interface AnalysisScreenProps {
   onComplete: (result: PlantIdentificationResult | DiagnosisResult) => void;
   onCancel: () => void;
   onPaymentRequired?: () => void;
+  onSessionExpired?: () => void;
 }
 
 export function AnalysisScreen({
@@ -35,6 +36,7 @@ export function AnalysisScreen({
   onComplete,
   onCancel,
   onPaymentRequired,
+  onSessionExpired,
 }: AnalysisScreenProps) {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -114,20 +116,43 @@ export function AnalysisScreen({
         let result: PlantIdentificationResult | DiagnosisResult;
 
         if (scanType === 'identify') {
-          result = await identifyPlant(image, deviceId);
+          result = await identifyPlant(image);
         } else {
-          result = await diagnosePlant(image, deviceId);
+          result = await diagnosePlant(image);
         }
 
-        // ✅ Enrich identify result with local plantInfo
-        if (scanType === 'identify' && 'plant_name' in result) {
-          const key = normalizePlantKey(result.plant_name);
-          const plantInfo = (PLANT_INFO as any)[key];
+        // ✅ Enrich identify result with plantInfo (try local first, fallback to USDA from backend)
+        if (scanType === 'identify' && 'plant_name' in result && result.plant_name) {
+          const identifyResult = result as PlantIdentificationResult;
+          const key = normalizePlantKey(identifyResult.plant_name);
+          const localPlantInfo = (PLANT_INFO as any)[key];
 
-          result = {
-            ...result,
-            plantInfo: plantInfo ?? null,
-          };
+          if (localPlantInfo) {
+            // Use full local plant info if available
+            result = {
+              ...identifyResult,
+              plantInfo: localPlantInfo,
+            };
+          } else if (identifyResult.scientific_name || identifyResult.family) {
+            // Build basic plantInfo from USDA backend data
+            result = {
+              ...identifyResult,
+              plantInfo: {
+                commonName: identifyResult.plant_name,
+                scientificName: identifyResult.scientific_name || identifyResult.plant_name,
+                family: identifyResult.family || 'Unknown',
+                description: `${identifyResult.plant_name} is a plant species${identifyResult.family ? ` belonging to the ${identifyResult.family} family` : ''}.`,
+                careGuide: null, // No care guide from USDA
+                characteristics: [],
+                growthInfo: null,
+              },
+            };
+          } else {
+            result = {
+              ...identifyResult,
+              plantInfo: null,
+            };
+          }
         }
 
         // Finish
@@ -138,6 +163,23 @@ export function AnalysisScreen({
         }, 500);
       } catch (error: any) {
         console.error('Analysis error:', error);
+
+        // Check if this is a session expired error (401)
+        if (error?.statusCode === 401 || error?.userFriendlyError?.type === 'UNAUTHORIZED') {
+          console.warn('[AnalysisScreen] Session expired, redirecting to login');
+          if (onSessionExpired) {
+            onSessionExpired();
+          } else {
+            // Fallback: show error and cancel
+            Toast.show({
+              type: 'error',
+              text1: 'Session Expired',
+              text2: 'Your session has expired. Please log in again.',
+            });
+            onCancel();
+          }
+          return;
+        }
 
         // Check if this is a payment required error (402)
         if (error?.statusCode === 402 || error?.userFriendlyError?.title === 'Free Scans Exhausted') {
@@ -156,6 +198,22 @@ export function AnalysisScreen({
               onCancel();
             }, 1000);
           }
+          return;
+        }
+
+        // Check if this is a bad image quality error
+        if (error?.userFriendlyError?.type === 'BAD_IMAGE') {
+          Alert.alert(
+            error?.userFriendlyError?.title || 'Image Quality Issue',
+            error?.userFriendlyError?.message || 'The image quality is not good enough or the leaf is not clearly visible. Please upload a clearer photo.',
+            [
+              {
+                text: 'Try Again',
+                onPress: () => onCancel(),
+              },
+            ],
+            { cancelable: false }
+          );
           return;
         }
 

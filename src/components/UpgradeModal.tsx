@@ -150,7 +150,7 @@ export function UpgradeModal({
       <SafeAreaView style={{ flex: 1 }}>
         <View className="flex-1 bg-black/60 justify-center items-center p-6">
           <Card
-  className="w-full max-w-md"
+  className="w-full max-w-md bg-[#F2F6F5]"
   style={{
     maxHeight: '90%', // ✅ Android needs this
   }}
@@ -271,7 +271,7 @@ export function UpgradeModal({
                   activeOpacity={0.7}
                 >
                 <Card
-  className="border-2 border-border bg-background"
+  className="border-2 border-border bg-[#F2F6F5]"
   style={{ shadowOpacity: 0, elevation: 0 }}
 >
                 <View className="flex-row items-center justify-between">
@@ -287,6 +287,9 @@ export function UpgradeModal({
 </Card>
 
               </TouchableOpacity>
+
+              {/* Spacer between plans */}
+              <View className="h-4" />
 
               {/* Yearly Plan (Popular) */}
               <TouchableOpacity
@@ -378,7 +381,7 @@ export function UpgradeModal({
     </TouchableOpacity>
   ) : (
     <Card
-  className="border border-border bg-muted/30"
+  className="border border-border bg-[#F2F6F5]"
   style={{ shadowOpacity: 0, elevation: 0 }}
 >
         Apply Coupon
@@ -447,17 +450,12 @@ export function UpgradeModal({
               </Text>
             </View>
 
-            {/* Close Button */}
-            <Button
-              variant="outline"
-              size="md"
-              fullWidth
-              onPress={onClose}
-            >
-              <Text className="text-muted-foreground">
-  Continue with limited access
-</Text>
-            </Button>
+            {/* Close Link */}
+            <TouchableOpacity onPress={onClose} activeOpacity={0.7}>
+              <Text className="text-sm text-muted-foreground text-center underline">
+                Continue with limited access
+              </Text>
+            </TouchableOpacity>
           </ScrollView>
         </Card>
       </View>

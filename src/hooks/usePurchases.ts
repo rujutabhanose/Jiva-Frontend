@@ -166,18 +166,32 @@ export function usePurchases(): UsePurchasesReturn {
           };
         }
 
-        // Sync with backend to update user's pro status
+        // Sync with backend to update user's pro status (requires authentication)
         try {
-          console.log('[RevenueCat] DEV MODE: Calling upgrade endpoint with device_id:', deviceId);
+          console.log('[RevenueCat] DEV MODE: Calling upgrade endpoint');
+
+          // Get authentication token - required for upgrade
+          const { storage } = await import('../utils/storage');
+          const token = await storage.getToken();
+
+          if (!token) {
+            console.error('[RevenueCat] DEV MODE: No JWT token - user must be logged in');
+            return {
+              success: false,
+              message: 'Please log in to upgrade to Pro',
+            };
+          }
+
+          const plan = pkg.identifier.includes('annual') || pkg.identifier.includes('year') ? 'yearly' : 'monthly';
+
+          console.log('[RevenueCat] DEV MODE: Using JWT-based upgrade');
           const response = await fetch(API_ENDPOINTS.UPGRADE_TO_PRO, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify({
-              device_id: deviceId,
-              plan: pkg.identifier.includes('annual') || pkg.identifier.includes('year') ? 'yearly' : 'monthly',
-            }),
+            body: JSON.stringify({ plan }),
           });
 
           if (!response.ok) {
@@ -214,18 +228,20 @@ export function usePurchases(): UsePurchasesReturn {
         setCustomerInfo(customerInfo);
         console.log('[RevenueCat] Purchase successful!');
 
-        // Sync with backend to update user's pro status
-        if (deviceId) {
-          try {
+        // Sync with backend to update user's pro status (requires authentication)
+        try {
+          const { storage } = await import('../utils/storage');
+          const token = await storage.getToken();
+          const plan = pkg.identifier.includes('annual') || pkg.identifier.includes('year') ? 'yearly' : 'monthly';
+
+          if (token) {
             const response = await fetch(API_ENDPOINTS.UPGRADE_TO_PRO, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
               },
-              body: JSON.stringify({
-                device_id: deviceId,
-                plan: pkg.identifier.includes('annual') || pkg.identifier.includes('year') ? 'yearly' : 'monthly',
-              }),
+              body: JSON.stringify({ plan }),
             });
 
             if (!response.ok) {
@@ -233,10 +249,12 @@ export function usePurchases(): UsePurchasesReturn {
             } else {
               console.log('[RevenueCat] Pro status synced to backend successfully');
             }
-          } catch (backendError) {
-            console.error('[RevenueCat] Error syncing to backend:', backendError);
-            // Don't fail the purchase if backend sync fails
+          } else {
+            console.warn('[RevenueCat] No auth token - cannot sync pro status to backend');
           }
+        } catch (backendError) {
+          console.error('[RevenueCat] Error syncing to backend:', backendError);
+          // Don't fail the purchase if backend sync fails
         }
 
         return {
@@ -294,16 +312,19 @@ export function usePurchases(): UsePurchasesReturn {
         setIsPro(true);
         setCustomerInfo(customerInfo);
 
-        // Sync with backend to update user's pro status
-        if (deviceId) {
-          try {
+        // Sync with backend to update user's pro status (requires authentication)
+        try {
+          const { storage } = await import('../utils/storage');
+          const token = await storage.getToken();
+
+          if (token) {
             const response = await fetch(API_ENDPOINTS.UPGRADE_TO_PRO, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
               },
               body: JSON.stringify({
-                device_id: deviceId,
                 plan: 'pro',
               }),
             });
@@ -311,9 +332,11 @@ export function usePurchases(): UsePurchasesReturn {
             if (!response.ok) {
               console.warn('[RevenueCat] Failed to sync pro status to backend, but restore was successful');
             }
-          } catch (backendError) {
-            console.error('[RevenueCat] Error syncing to backend:', backendError);
+          } else {
+            console.warn('[RevenueCat] No auth token - cannot sync pro status to backend');
           }
+        } catch (backendError) {
+          console.error('[RevenueCat] Error syncing to backend:', backendError);
         }
 
         return {

@@ -9,8 +9,8 @@ module.exports = {
     extend: {
       colors: {
         // Backgrounds
-        background: '#F7F4EC', // Main background (soft warm cream)
-        surface: '#FFFBF2', // Card/surface background (lighter cream)
+        background: '#FFFFFF', // Main background (soft warm cream)
+        surface: '#F2F6F5', // Card/surface background (lighter cream)
         'header-bg': '#2F5D3B', // Header/navigation background (deep forest green)
         
         // Text

@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
 import { Header } from '../components/ui/Header';
 import { ImageWithFallback } from '../components/ImageWithFallback';
+import { DiagnosisFeedbackCard } from '../components/DiagnosisFeedbackCard';
 import {
   ChevronDown,
   ChevronUp,
@@ -13,14 +18,12 @@ import {
   Target,
   Stethoscope,
   Save,
-  ScanLine,
-  ExternalLink,
 } from 'lucide-react-native';
+
 const flatCardStyle = {
   elevation: 0,               // Android
   shadowColor: 'transparent', // iOS
 };
-
 
 interface DiagnosisScreenProps {
   image: string;
@@ -29,6 +32,7 @@ interface DiagnosisScreenProps {
   symptoms: string[];
   causes: string[];
   treatment: string[];
+  plantName?: string;
   onBack: () => void;
   onSave: () => Promise<void>;
   onScanAnother: () => void;
@@ -41,6 +45,7 @@ export function DiagnosisScreen({
   symptoms,
   causes,
   treatment,
+  plantName,
   onBack,
   onSave,
   onScanAnother,
@@ -50,19 +55,19 @@ export function DiagnosisScreen({
     symptoms: true,
     causes: false,
     treatment: true,
-    references: false,
   });
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onSave();
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const toggle = (key: keyof typeof expanded) =>
     setExpanded((p) => ({ ...p, [key]: !p[key] }));
-
-  const confidenceVariant =
-    confidence >= 80 ? 'success' : confidence >= 60 ? 'warning' : 'default';
-
-  const confidenceLabel =
-    confidence >= 80 ? 'High confidence'
-    : confidence >= 60 ? 'Medium confidence'
-    : 'Low confidence';
 
   const SectionHeader = ({
     title,
@@ -106,7 +111,7 @@ export function DiagnosisScreen({
 
   return (
     <View className="flex-1 bg-background">
-      <Header title="Diagnosis" showBack showBeta onBack={onBack} />
+      <Header title="Diagnosis" showBack onBack={onBack} />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         <View className="max-w-lg mx-auto px-6 py-6">
@@ -134,14 +139,17 @@ export function DiagnosisScreen({
               </View>
 
               <View className="flex-1">
+                {plantName && (
+                  <Text className="text-sm text-muted-foreground mb-1">
+                    Plant: {plantName}
+                  </Text>
+                )}
                 <Text className="text-xl font-bold mb-1">
                   {condition}
                 </Text>
-
-                <Badge variant={confidenceVariant}>
-                  {confidenceLabel} · {confidence}%
-                </Badge>
-
+                <Text className="text-sm text-primary">
+                  Confidence: {confidence > 1 ? confidence.toFixed(1) : (confidence * 100).toFixed(1)}%
+                </Text>
                 <Text className="text-xs text-muted-foreground mt-2 leading-relaxed">
                   Based on visible symptoms detected in the uploaded image.
                 </Text>
@@ -150,82 +158,91 @@ export function DiagnosisScreen({
           </Card>
 
           {/* SYMPTOMS */}
-          <Card className="mb-5">
-            <SectionHeader
-              title="Identified Symptoms"
-              icon={<Stethoscope size={16} color="#3F7C4C" />}
-              active={expanded.symptoms}
-              onPress={() => toggle('symptoms')}
-            />
-            {expanded.symptoms && (
-              <View>
-                {symptoms.map((s, i) => (
-                  <View key={i} className="flex-row gap-2 mb-2">
-                    <Bullet />
-                    <Text className="text-sm flex-1 leading-relaxed">
-                      {s}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </Card>
+          {symptoms.length > 0 && (
+            <Card className="bg-[#F2F6F5] mb-5">
+              <SectionHeader
+                title="Identified Symptoms"
+                icon={<Stethoscope size={16} color="#3F7C4C" />}
+                active={expanded.symptoms}
+                onPress={() => toggle('symptoms')}
+              />
+              {expanded.symptoms && (
+                <View>
+                  {symptoms.map((s: string, i: number) => (
+                    <View key={i} className="flex-row gap-2 mb-2">
+                      <Bullet />
+                      <Text className="text-sm flex-1 leading-relaxed">
+                        {s}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </Card>
+          )}
 
           {/* CAUSES */}
-          <Card className="mb-5">
-            <SectionHeader
-              title="Likely Causes"
-              icon={<Target size={16} color="#3F7C4C" />}
-              active={expanded.causes}
-              onPress={() => toggle('causes')}
-            />
-            {expanded.causes && (
-              <View>
-                {causes.map((c, i) => (
-                  <View key={i} className="flex-row gap-2 mb-2">
-                    <Bullet />
-                    <Text className="text-sm flex-1 leading-relaxed">
-                      {c}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </Card>
+          {causes.length > 0 && (
+            <Card className="bg-[#F2F6F5] mb-5">
+              <SectionHeader
+                title="Likely Causes"
+                icon={<Target size={16} color="#3F7C4C" />}
+                active={expanded.causes}
+                onPress={() => toggle('causes')}
+              />
+              {expanded.causes && (
+                <View>
+                  {causes.map((c: string, i: number) => (
+                    <View key={i} className="flex-row gap-2 mb-2">
+                      <Bullet />
+                      <Text className="text-sm flex-1 leading-relaxed">
+                        {c}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </Card>
+          )}
 
           {/* TREATMENT */}
-          <Card
-  className="border-primary/30 bg-primary/5 mb-5"
-  style={flatCardStyle}
->
-            <SectionHeader
-              title="Recommended Treatment"
-              icon={<Stethoscope size={16} color="#2F6F44" />}
-              active={expanded.treatment}
-              primary
-              onPress={() => toggle('treatment')}
-            />
-            {expanded.treatment && (
-              <View>
-                {treatment.map((step, i) => (
-                  <View key={i} className="flex-row gap-3 mb-4">
-                    <Text className="w-6 text-primary font-semibold text-sm text-center">
-  {i + 1}.
-</Text>
-                    <Text className="text-sm flex-1 leading-relaxed">
-                      {step}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </Card>
+          {treatment.length > 0 && (
+            <Card
+              className="border-primary/30 bg-primary/5 mb-5"
+              style={flatCardStyle}
+            >
+              <SectionHeader
+                title="Recommended Treatment"
+                icon={<Stethoscope size={16} color="#2F6F44" />}
+                active={expanded.treatment}
+                primary
+                onPress={() => toggle('treatment')}
+              />
+              {expanded.treatment && (
+                <View>
+                  {treatment.map((step: string, i: number) => (
+                    <View key={i} className="flex-row gap-3 mb-4">
+                      <Text className="w-6 text-primary font-semibold text-sm text-center">
+                        {i + 1}.
+                      </Text>
+                      <Text className="text-sm flex-1 leading-relaxed">
+                        {step}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </Card>
+          )}
+
+          {/* FEEDBACK */}
+          <DiagnosisFeedbackCard condition={condition} />
 
           {/* DISCLAIMER */}
           <Card
-  className="bg-warning/10 border-warning/30"
-  style={flatCardStyle}
->
+            className="bg-warning/10 border-warning/30 mt-5"
+            style={flatCardStyle}
+          >
             <Text className="text-xs text-center text-muted-foreground leading-relaxed">
               This diagnosis is informational only and should not replace
               professional agricultural advice.
@@ -240,11 +257,7 @@ export function DiagnosisScreen({
           <Button
             variant="outline"
             className="flex-1"
-            onPress={async () => {
-              setIsSaving(true);
-              await onSave();
-              setIsSaving(false);
-            }}
+            onPress={handleSave}
             disabled={isSaving}
           >
             <Save size={16} color="#3F7C4C" />
@@ -259,7 +272,7 @@ export function DiagnosisScreen({
             onPress={onScanAnother}
             disabled={isSaving}
           >
-              Scan Again
+            Scan Again
           </Button>
         </View>
       </SafeAreaView>

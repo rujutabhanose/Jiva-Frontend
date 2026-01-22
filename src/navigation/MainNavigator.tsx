@@ -18,6 +18,7 @@ interface MainNavigatorProps {
   onJoinBeta: () => void;
   onLogout: () => void;
   onUpgrade?: () => void;
+  onCancelSubscription?: () => void;
   onDeleteAccount?: () => void;
   activeTab?: MainTabScreen;
   onTabChange?: (tab: MainTabScreen) => void;
@@ -34,6 +35,7 @@ export function MainNavigator({
   onJoinBeta,
   onLogout,
   onUpgrade,
+  onCancelSubscription,
   onDeleteAccount,
   activeTab: externalActiveTab,
   onTabChange: externalOnTabChange,
@@ -102,6 +104,7 @@ export function MainNavigator({
             onLogout={onLogout}
             onEditPreferences={handleEditPreferences}
             onUpgrade={handleUpgrade}
+            onCancelSubscription={onCancelSubscription}
             onDeleteAccount={onDeleteAccount}
           />
         )}

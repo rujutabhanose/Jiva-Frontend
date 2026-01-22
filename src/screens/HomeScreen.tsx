@@ -13,7 +13,7 @@ import { Card } from "../components/ui/Card";
 import { ProgressBar } from "../components/ui/ProgressBar";
 import { storage } from "../utils/storage";
 import plantCareTipsData from "../data/plant_care_tips.json";
-import { Check } from "lucide-react-native";
+import { Check, Crown } from "lucide-react-native";
 // UpgradeModal removed - using the one from RootNavigator via onUpgrade prop
 
 /* ----------------------------------
@@ -157,10 +157,10 @@ export function HomeScreen({
                 onPress={() => onNavigate("scan-start?mode=identify")}
                 className="mb-6"
               >
-                <Card padding="lg">
+                <Card padding="lg" className="bg-[#F2F6F5]">
                   <View className="flex-row items-center gap-4">
                     <View className="w-16 h-16 rounded-2xl border border-border bg-white items-center justify-center">
-                      <View className="w-12 h-12 rounded-xl bg-[#E6F2EA] items-center justify-center">
+                      <View className="w-12 h-12 rounded-xl bg-[#F2F6F5] items-center justify-center">
                         <Image
                           source={require("../../assets/identify-plant.png")}
                           style={{ width: 34, height: 34 }}
@@ -189,10 +189,10 @@ export function HomeScreen({
                 activeOpacity={0.7}
                 onPress={() => onNavigate("scan-start?mode=diagnose")}
               >
-                <Card padding="lg">
+                <Card padding="lg" className="bg-[#F2F6F5]">
                   <View className="flex-row items-center gap-4">
                     <View className="w-16 h-16 rounded-2xl border border-border bg-white items-center justify-center">
-                      <View className="w-12 h-12 rounded-xl bg-[#E6F2EA] items-center justify-center">
+                      <View className="w-12 h-12 rounded-xl bg-[#F2F6F5] items-center justify-center">
                         <Image
                           source={require("../../assets/diagnose-plant.png")}
                           style={{ width: 34, height: 34 }}
@@ -246,11 +246,18 @@ export function HomeScreen({
                   }}
                 >
                   <View className="flex-row gap-4">
-                    <Image
-                      source={require("../../assets/upgrade.png")}
-                      style={{ width: 48, height: 48 }}
-                      resizeMode="contain"
-                    />
+                    <View
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 24,
+                        backgroundColor: "#FFD700",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Crown size={24} color="#3F6B3A" />
+                    </View>
 
                     <View className="flex-1">
                       <Text className="text-base font-bold text-primary mb-1">

@@ -48,18 +48,24 @@ export function categorizeError(error: any): UserFriendlyError {
     };
   }
 
-  // Bad image errors (from backend)
+  // Bad image errors (from backend quality_gate)
+  const lowerMessage = error.message?.toLowerCase() || '';
   if (
-    error.message?.toLowerCase().includes('no leaf') ||
-    error.message?.toLowerCase().includes('no plant') ||
-    error.message?.toLowerCase().includes('invalid image') ||
-    error.message?.toLowerCase().includes('unable to detect') ||
-    error.response?.status === 400 && error.message?.includes('image')
+    lowerMessage.includes('no leaf') ||
+    lowerMessage.includes('no plant') ||
+    lowerMessage.includes('invalid image') ||
+    lowerMessage.includes('unable to detect') ||
+    lowerMessage.includes('low quality') ||
+    lowerMessage.includes('quality') ||
+    lowerMessage.includes('blurry') ||
+    lowerMessage.includes('diagnosis failed') ||
+    lowerMessage.includes('not visible') ||
+    (error.response?.status === 400 && lowerMessage.includes('image'))
   ) {
     return {
       type: ErrorType.BAD_IMAGE,
-      title: 'Image Quality Issue',
-      message: 'We couldn\'t detect a plant in this image. Please ensure:\n\n• The image shows a clear view of the plant or leaf\n• There\'s good lighting\n• The plant is in focus\n• Try getting closer to the plant',
+      title: 'Image Not Clear',
+      message: 'The image quality is not good enough or the leaf is not clearly visible. Please upload a clearer photo.',
       canRetry: true,
       retryDelay: 0,
     };

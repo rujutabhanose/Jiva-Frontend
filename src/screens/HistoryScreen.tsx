@@ -52,19 +52,19 @@ export function HistoryScreen({ history, onNavigate, onSelectScan }: HistoryScre
       if (diffDays === 1) return 'Yesterday';
       if (diffDays < 7) return `${diffDays} days ago`;
 
-      return dateObj.toLocaleDateString();
+      // Get timezone offset for absolute dates
+      const timezoneOffset = -dateObj.getTimezoneOffset() / 60;
+      const gmtString = timezoneOffset >= 0
+        ? `GMT+${timezoneOffset}`
+        : `GMT${timezoneOffset}`;
+
+      return `${dateObj.toLocaleDateString()} (${gmtString})`;
     } catch (error) {
       console.error('[HistoryScreen] formatDate error:', error);
       return 'Unknown date';
     }
   };
-  
-  const getConfidenceVariant = (confidence: number) => {
-    if (confidence >= 80) return 'success';
-    if (confidence >= 60) return 'warning';
-    return 'default';
-  };
-  
+
   return (
     <View className="flex-1 bg-background">
       <Header
@@ -94,10 +94,10 @@ export function HistoryScreen({ history, onNavigate, onSelectScan }: HistoryScre
           <TouchableOpacity
             key={scan.id}
             activeOpacity={0.7}
-            style={{ marginBottom: 12 }}
+            style={{ marginBottom: 20 }}
             onPress={() => onSelectScan(scan)}
           >
-            <Card padding="none">
+            <Card padding="none" className="bg-[#F2F6F5]">
               <View style={{ flexDirection: 'row', gap: 12, padding: 12 }}>
                 <ImageWithFallback
                   src={scan.image}
@@ -109,16 +109,13 @@ export function HistoryScreen({ history, onNavigate, onSelectScan }: HistoryScre
                   <Text className="text-base font-semibold mb-1" numberOfLines={1}>
                     {scan.plant_name || scan.condition || 'Unknown'}
                   </Text>
-                  <View className="flex flex-row items-center gap-2 mb-2">
-                    <Badge variant={getConfidenceVariant(scan.confidence)}>
-                      {scan.confidence}%
-                    </Badge>
-                    {scan.mode && (
+                  {scan.mode && (
+                    <View className="flex flex-row items-center gap-2 mb-2">
                       <Badge variant="default">
                         {scan.mode === 'identification' ? 'Identify' : 'Diagnosis'}
                       </Badge>
-                    )}
-                  </View>
+                    </View>
+                  )}
                   <Text className="text-xs text-muted-foreground">
                     {formatDate(scan.date)}
                   </Text>

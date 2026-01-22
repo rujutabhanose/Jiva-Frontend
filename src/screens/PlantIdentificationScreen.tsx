@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../components/ui/Button';
 import { Header } from '../components/ui/Header';
 import { Card } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
 import { ImageWithFallback } from '../components/ImageWithFallback';
 import {
   Leaf,
@@ -88,51 +87,64 @@ export function PlantIdentificationScreen({
               </Text>
 
               {/* Description */}
-              <Card className="mb-4">
-                <View className="flex-row gap-3">
-                  <View className="w-10 h-10 bg-primary/10 rounded-xl items-center justify-center">
-                    <Leaf size={20} color="#3F7C4C" strokeWidth={2} />
+              {plantInfo.description && (
+                <Card className="bg-[#F2F6F5] mb-4">
+                  <View className="flex-row gap-3">
+                    <View className="w-10 h-10 bg-primary/10 rounded-xl items-center justify-center">
+                      <Leaf size={20} color="#3F7C4C" strokeWidth={2} />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-lg font-semibold mb-2">
+                        About this plant
+                      </Text>
+                      <Text className="text-sm text-muted-foreground leading-relaxed">
+                        {plantInfo.description}
+                      </Text>
+                    </View>
                   </View>
-                  <View className="flex-1">
-                    <Text className="text-lg font-semibold mb-2">
-                      About this plant
-                    </Text>
-                    <Text className="text-sm text-muted-foreground leading-relaxed">
-                      {plantInfo.description}
-                    </Text>
-                  </View>
-                </View>
-              </Card>
+                </Card>
+              )}
 
-              {/* CARE GUIDE – ALWAYS VISIBLE */}
-              <Card className="mb-4">
-                <View className="flex-row items-center gap-3 mb-3">
-                  <Sprout size={20} color="#3F7C4C" strokeWidth={2} />
-                  <Text className="text-lg font-semibold">
-                    Care Guide
+              {/* CARE GUIDE – Only show if available */}
+              {plantInfo.careGuide && (
+                <Card className="bg-[#F2F6F5] mb-4">
+                  <View className="flex-row items-center gap-3 mb-3">
+                    <Sprout size={20} color="#3F7C4C" strokeWidth={2} />
+                    <Text className="text-lg font-semibold">
+                      Care Guide
+                    </Text>
+                  </View>
+
+                  <View>
+                    <Text className="text-sm mb-2">💧 {plantInfo.careGuide.water}</Text>
+                    <Text className="text-sm mb-2">☀️ {plantInfo.careGuide.light}</Text>
+                    <Text className="text-sm mb-2">🌡 {plantInfo.careGuide.temperature}</Text>
+                    <Text className="text-sm mb-2">💦 {plantInfo.careGuide.humidity}</Text>
+                    <Text className="text-sm">🌱 {plantInfo.careGuide.soil}</Text>
+                  </View>
+                </Card>
+              )}
+
+              {/* Confidence info when we have USDA info but no care guide */}
+              {!plantInfo.careGuide && (
+                <Card className="bg-[#F2F6F5] mb-4">
+                  <Text className="text-sm text-muted-foreground">
+                    Identification confidence: {Math.round(confidence)}%
                   </Text>
-                </View>
-
-                <View>
-                  <Text className="text-sm mb-2">💧 {plantInfo.careGuide.water}</Text>
-                  <Text className="text-sm mb-2">☀️ {plantInfo.careGuide.light}</Text>
-                  <Text className="text-sm mb-2">🌡 {plantInfo.careGuide.temperature}</Text>
-                  <Text className="text-sm mb-2">💦 {plantInfo.careGuide.humidity}</Text>
-                  <Text className="text-sm">🌱 {plantInfo.careGuide.soil}</Text>
-                </View>
-              </Card>
+                </Card>
+              )}
             </>
           ) : (
             <View>
               <Text className="text-2xl font-bold mb-3">
                 {plant_name}
               </Text>
-              <Card className="p-4">
+              <Card className="bg-[#F2F6F5] p-4">
                 <Text className="text-sm text-muted-foreground">
                   Confidence: {confidence}%
                 </Text>
                 <Text className="text-sm text-muted-foreground mt-2">
-                  Detailed information is not available for this plant yet.
+                  Detailed information is not available for this plant yet. Coming soon!
                 </Text>
               </Card>
             </View>

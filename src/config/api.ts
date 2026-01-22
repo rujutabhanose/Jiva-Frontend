@@ -48,11 +48,12 @@ export const API_ENDPOINTS = {
   REGISTER: `${API_BASE_URL}/api/v1/auth/register`,
   LOGIN: `${API_BASE_URL}/api/v1/auth/login`,
   LOGOUT: `${API_BASE_URL}/api/v1/auth/logout`,
+  RESEND_VERIFICATION: `${API_BASE_URL}/api/v1/auth/resend-verification`,
 
-  // User endpoints
-  GET_OR_CREATE_DEVICE_USER: `${API_BASE_URL}/api/v1/users/device`,
-  UPDATE_SCAN_COUNT: `${API_BASE_URL}/api/v1/users/scan-count`,
+  // User endpoints (all require authentication)
+  PROFILE: `${API_BASE_URL}/api/v1/users/me`,
   UPGRADE_TO_PRO: `${API_BASE_URL}/api/v1/users/upgrade`,
+  CANCEL_SUBSCRIPTION: `${API_BASE_URL}/api/v1/users/cancel-subscription`,
   REDEEM_COUPON: `${API_BASE_URL}/api/v1/users/redeem-coupon`,
   VALIDATE_COUPON: `${API_BASE_URL}/api/v1/users/validate-coupon`,
   DELETE_ACCOUNT: `${API_BASE_URL}/api/v1/users/me`,
@@ -68,4 +69,7 @@ export const API_ENDPOINTS = {
   UPDATE_SCAN_NOTES: (scanId: number) => `${API_BASE_URL}/api/v1/scans/${scanId}/notes`,
   DELETE_SCAN: (scanId: number) => `${API_BASE_URL}/api/v1/scans/${scanId}`,
   GET_SCAN_STATS: `${API_BASE_URL}/api/v1/scans/stats/summary`,
+
+  // Feedback endpoints
+  SUBMIT_DIAGNOSIS_FEEDBACK: `${API_BASE_URL}/api/v1/feedback/diagnosis`,
 };

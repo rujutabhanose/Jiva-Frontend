@@ -51,13 +51,23 @@ export const storage = {
   // User data management
   async setUserData(userData: Partial<UserData>): Promise<void> {
     try {
-      // Merge with existing data
+      // Merge with existing data, but don't overwrite with null/undefined values
       const existingData = await this.getUserData();
       console.log('[Storage] setUserData - existing data:', existingData);
       console.log('[Storage] setUserData - new data to merge:', userData);
+
+      // Filter out null/undefined values from new data to preserve existing preferences
+      const filteredUserData: Partial<UserData> = {};
+      for (const [key, value] of Object.entries(userData)) {
+        if (value !== null && value !== undefined) {
+          (filteredUserData as any)[key] = value;
+        }
+      }
+      console.log('[Storage] setUserData - filtered data (nulls removed):', filteredUserData);
+
       const mergedData = existingData
-        ? { ...existingData, ...userData }
-        : { ...userData };
+        ? { ...existingData, ...filteredUserData }
+        : { ...filteredUserData };
       console.log('[Storage] setUserData - merged result:', mergedData);
       await AsyncStorage.setItem(USER_KEY, JSON.stringify(mergedData));
       console.log('[Storage] setUserData - successfully saved to AsyncStorage');
@@ -116,10 +126,11 @@ export const storage = {
     }
   },
 
-  // Clear all auth data
+  // Clear auth token only - preserve user data and preferences
   async clearAll(): Promise<void> {
     await this.removeToken();
-    await this.removeUserData();
+    // Don't remove user data to preserve preferences across logout/login
+    // await this.removeUserData();
   },
 
   // Check if user is authenticated

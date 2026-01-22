@@ -23,10 +23,11 @@ function AppContent() {
     deleteScan,
     isPro,
     upgradeToPro,
+    cancelSubscription,
     redeemCoupon,
     canScan,
-    clearUserHistory,
-    reloadUserData
+    reloadUserData,
+    incrementScansUsed,
   } = useApp();
 
   console.log('[App] AppContent rendering with userId:', userId);
@@ -45,9 +46,10 @@ function AppContent() {
       updateScanNotes={updateScanNotes}
       deleteScan={deleteScan}
       upgradeToPro={upgradeToPro}
+      cancelSubscription={cancelSubscription}
       redeemCoupon={redeemCoupon}
-      clearUserHistory={clearUserHistory}
       reloadUserData={reloadUserData}
+      incrementScansUsed={incrementScansUsed}
     />
   );
 }

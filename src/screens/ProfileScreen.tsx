@@ -15,12 +15,36 @@ interface ProfileScreenProps {
   onLogout: () => void;
   onEditPreferences?: () => void;
   onUpgrade?: () => void;
+  onCancelSubscription?: () => void;
   onDeleteAccount?: () => void;
 }
 
-export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogout, onEditPreferences, onUpgrade, onDeleteAccount }: ProfileScreenProps) {
+export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogout, onEditPreferences, onUpgrade, onCancelSubscription, onDeleteAccount }: ProfileScreenProps) {
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
   const [weeklyTips, setWeeklyTips] = React.useState(true);
+
+  const handleCancelSubscription = () => {
+    Alert.alert(
+      'Cancel Subscription',
+      'Are you sure you want to cancel your Pro subscription?\n\nYou will lose access to:\n• Unlimited plant diagnosis scans\n• Advanced disease diagnosis\n• Detailed treatment plans\n• Priority support\n\nYour subscription will be cancelled immediately.',
+      [
+        {
+          text: 'Keep Subscription',
+          style: 'cancel',
+        },
+        {
+          text: 'Cancel Subscription',
+          style: 'destructive',
+          onPress: () => {
+            if (onCancelSubscription) {
+              onCancelSubscription();
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   const handleDeleteAccount = () => {
     Alert.alert(
@@ -99,7 +123,7 @@ export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogou
           {/* Plant Preferences Section */}
           <View>
             <Text className="mb-2 px-1 text-xs uppercase tracking-wide text-muted-foreground">Plant Preferences</Text>
-            <Card>
+            <Card className="bg-[#F2F6F5]">
               <View className="flex flex-row items-start gap-3 mb-4">
                 <Leaf size={20} color="#3F7C4C" strokeWidth={2} />
                 <View className="flex-1">
@@ -156,7 +180,7 @@ export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogou
           <View>
             <Text className="mb-2 px-1 text-xs uppercase tracking-wide text-muted-foreground">Subscription</Text>
             <Card
-  className={!isPro ? "border-primary/30 bg-primary/5" : ""}
+  className="bg-[#F2F6F5]"
   style={{ shadowOpacity: 0, elevation: 0 }}
 >
               <View className="flex flex-row items-center justify-between mb-2">
@@ -166,7 +190,22 @@ export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogou
                 </View>
                 {isPro && <Badge variant="success">Active</Badge>}
               </View>
-              {!isPro && (
+              {isPro ? (
+                <>
+                  <Text className="text-sm text-muted-foreground mb-2">
+                    Unlimited plant scans, advanced disease detection, and priority support
+                  </Text>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={handleCancelSubscription}
+                    className="mt-3 px-4 py-2 rounded-full self-start bg-destructive/10"
+                  >
+                    <Text className="text-sm font-medium text-destructive">
+                      Cancel Subscription
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
                 <>
                   <Text className="text-sm text-muted-foreground mb-2">
                     Unlimited plant scans, disease detection, and priority models
@@ -190,6 +229,7 @@ export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogou
             <Text className="mb-2 px-1 text-xs uppercase tracking-wide text-muted-foreground">Notifications</Text>
             <Card
   padding="none"
+  className="bg-[#F2F6F5]"
   style={{ shadowOpacity: 0, elevation: 0 }}
 >
               <View className="flex flex-row items-center justify-between p-4">
@@ -215,6 +255,7 @@ export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogou
             <Text className="mb-2 px-1 text-xs uppercase tracking-wide text-muted-foreground">Data & Privacy</Text>
             <Card
   padding="none"
+  className="bg-[#F2F6F5]"
   style={{ shadowOpacity: 0, elevation: 0 }}
 >
               <TouchableOpacity activeOpacity={0.6} className="w-full flex flex-row items-center gap-3 p-4">
@@ -234,7 +275,7 @@ export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogou
           </View>
 
           {/* About */}
-          <Card style={{ shadowOpacity: 0, elevation: 0 }}>
+          <Card className="bg-[#F2F6F5]" style={{ shadowOpacity: 0, elevation: 0 }}>
             <View className="flex flex-row items-center gap-3 mb-2">
               <Info size={20} color="#3F7C4C" strokeWidth={2} />
               <Text className="font-medium">About Jiva Plants</Text>

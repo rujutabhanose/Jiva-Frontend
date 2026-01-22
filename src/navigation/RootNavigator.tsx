@@ -25,7 +25,7 @@ import { CameraPermissionModal } from "../components/CameraPermissionModal";
 import { RootNavigationState, AppScreen, MainTabScreen } from "./types";
 import Toast from "react-native-toast-message";
 import { storage, UserType, PlantType } from "../utils/storage";
-import { PlantIdentificationResult, DiagnosisResult, deleteAccount } from "../services/api";
+import { PlantIdentificationResult, DiagnosisResult, deleteAccount, updateUserProfile } from "../services/api";
 
 interface RootNavigatorProps {
   userId: string;
@@ -40,9 +40,10 @@ interface RootNavigatorProps {
   updateScanNotes: (scanId: string, notes: string) => void;
   deleteScan: (scanId: string) => Promise<void>;
   upgradeToPro: () => Promise<{ success: boolean; message: string }>;
+  cancelSubscription: () => Promise<{ success: boolean; message: string }>;
   redeemCoupon: (couponCode: string) => Promise<{ success: boolean; message: string }>;
-  clearUserHistory: () => Promise<void>;
   reloadUserData: () => Promise<void>;
+  incrementScansUsed: () => Promise<void>;
 }
 
 export function RootNavigator({
@@ -58,9 +59,10 @@ export function RootNavigator({
   updateScanNotes,
   deleteScan,
   upgradeToPro,
+  cancelSubscription,
   redeemCoupon,
-  clearUserHistory,
   reloadUserData,
+  incrementScansUsed,
 }: RootNavigatorProps) {
   console.log('[RootNavigator] Rendering with userId:', userId);
   const [cameraPermission] = useCameraPermissions();
@@ -149,9 +151,8 @@ export function RootNavigator({
   };
 
   const handleLogout = async () => {
-    // Clear all auth data and user history
+    // Clear auth data only - preserve scan history
     await storage.clearAll();
-    await clearUserHistory(); // Clear scan history when logging out
     setRootState('auth');
     Toast.show({ type: 'success', text1: 'Logged out successfully' });
   };
@@ -204,6 +205,25 @@ export function RootNavigator({
         type: 'error',
         text1: 'Delete Failed',
         text2: error.userFriendlyError?.message || 'Failed to delete account. Please try again.'
+      });
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    const result = await cancelSubscription();
+    if (result.success) {
+      Toast.show({
+        type: 'success',
+        text1: 'Subscription Cancelled',
+        text2: result.message
+      });
+      // Reload user data to refresh the UI
+      await reloadUserData();
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Cancellation Failed',
+        text2: result.message
       });
     }
   };
@@ -336,10 +356,16 @@ export function RootNavigator({
         severity: diagnosisData.severity,
         health_score: (diagnosisData as any).health_score,
         diagnosis_data: diagnosisData,
+        plant_name: diagnosisData.plant_name,
       };
 
       // Store diagnosis scan temporarily - only save when user clicks Save button
       setPendingDiagnosisScan(newScan);
+
+      // Increment scan count immediately when diagnosis completes
+      // This ensures free users can't bypass the limit by not saving
+      incrementScansUsed();
+
       setModalScreen('diagnosis');
     } else {
       const identificationData = result as PlantIdentificationResult;
@@ -386,8 +412,20 @@ export function RootNavigator({
   };
 
   const handlePreferencesUpdate = async (userType: UserType | null, plantTypes: PlantType[]) => {
-    // Save preferences
+    // Save preferences locally
     await storage.updateOnboardingData(userType, plantTypes);
+
+    // Sync preferences to backend so they persist across logins
+    try {
+      await updateUserProfile({
+        userType: userType,
+        plantTypes: plantTypes as string[],
+      });
+      console.log('[RootNavigator] Preferences synced to backend successfully');
+    } catch (syncError) {
+      // Don't fail if backend sync fails - local storage is enough for now
+      console.warn('[RootNavigator] Failed to sync preferences to backend:', syncError);
+    }
 
     // Reload user data
     const data = await storage.getUserData();
@@ -444,6 +482,7 @@ export function RootNavigator({
           onJoinBeta={() => Toast.show({ type: 'success', text1: 'Beta program functionality coming soon' })}
           onLogout={handleLogout}
           onUpgrade={() => setShowUpgradeModal(true)}
+          onCancelSubscription={handleCancelSubscription}
           onDeleteAccount={handleDeleteAccount}
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -456,6 +495,7 @@ export function RootNavigator({
           onCamera={handleScanStart}
           onGallery={handleGallerySelect}
           onBack={handleBackToMain}
+          mode={scanMode}
         />
       )}
 
@@ -472,6 +512,10 @@ export function RootNavigator({
           image={capturedImage}
           mode={scanMode}
           source={imageSource}
+          onBack={() => {
+            setCapturedImage(null);
+            setModalScreen('scan-start');
+          }}
           onRetake={() => {
             if (imageSource === 'gallery') {
               // Directly open gallery picker again
@@ -500,6 +544,17 @@ export function RootNavigator({
             setModalScreen(null);
             setShowUpgradeModal(true);
           }}
+          onSessionExpired={async () => {
+            // safeFetch already cleared the token
+            setModalScreen(null);
+            setCapturedImage(null);
+            setRootState('auth');
+            Toast.show({
+              type: 'error',
+              text1: 'Session Expired',
+              text2: 'Please log in again to continue',
+            });
+          }}
         />
       )}
 
@@ -513,6 +568,17 @@ export function RootNavigator({
             setModalScreen(null);
             setShowUpgradeModal(true);
           }}
+          onSessionExpired={async () => {
+            // safeFetch already cleared the token
+            setModalScreen(null);
+            setCapturedImage(null);
+            setRootState('auth');
+            Toast.show({
+              type: 'error',
+              text1: 'Session Expired',
+              text2: 'Please log in again to continue',
+            });
+          }}
         />
       )}
 
@@ -524,6 +590,7 @@ export function RootNavigator({
           symptoms={pendingDiagnosisScan.symptoms}
           causes={pendingDiagnosisScan.causes}
           treatment={pendingDiagnosisScan.treatment}
+          plantName={pendingDiagnosisScan.plant_name}
           onBack={handleBackToMain}
           onSave={async () => {
             if (pendingDiagnosisScan) {

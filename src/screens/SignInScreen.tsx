@@ -3,15 +3,16 @@ import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platfor
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Header } from '../components/ui/Header';
-import { Mail } from 'lucide-react-native';
 
 interface SignInScreenProps {
   onSignIn: (email: string, password: string) => void;
   onBack: () => void;
   onRegister: () => void;
+  isLoading?: boolean;
+  error?: string | null;
 }
 
-export function SignInScreen({ onSignIn, onBack, onRegister }: SignInScreenProps) {
+export function SignInScreen({ onSignIn, onBack, onRegister, isLoading, error }: SignInScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({ email: '', password: '' });
@@ -87,13 +88,22 @@ export function SignInScreen({ onSignIn, onBack, onRegister }: SignInScreenProps
             />
           </View>
 
+          {/* API Error Display */}
+          {error && (
+            <View className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+              <Text className="text-red-600 text-sm text-center">{error}</Text>
+            </View>
+          )}
+
           <Button
-  variant="primary"
-  size="lg"
-  fullWidth
-  onPress={handleSubmit}
-  className="mb-6 rounded-xl"
->Sign In
+            variant="primary"
+            size="lg"
+            fullWidth
+            onPress={handleSubmit}
+            className="mb-6 rounded-xl"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Signing in...' : 'Sign In'}
           </Button>
 
           {/* Register Link */}

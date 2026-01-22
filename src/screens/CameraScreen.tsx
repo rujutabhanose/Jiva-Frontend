@@ -10,7 +10,7 @@ interface CameraScreenProps {
   mode?: 'identify' | 'diagnose';
 }
 
-export function CameraScreen({ onCapture, onClose }: CameraScreenProps) {
+export function CameraScreen({ onCapture, onClose, mode = 'diagnose' }: CameraScreenProps) {
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
 
@@ -85,6 +85,17 @@ export function CameraScreen({ onCapture, onClose }: CameraScreenProps) {
         </TouchableOpacity>
       </View>
 
+      {/* Instruction Hint */}
+      <View style={styles.hintContainer}>
+        <View style={styles.hintBadge}>
+          <Text style={styles.hintText}>
+            {mode === 'identify'
+              ? 'Point camera at a leaf'
+              : 'Point camera at the affected leaf'}
+          </Text>
+        </View>
+      </View>
+
       {/* Bottom Controls */}
       <View style={styles.controls}>
         <TouchableOpacity
@@ -120,6 +131,25 @@ const styles = StyleSheet.create({
   backButtonIcon: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  hintContainer: {
+    position: 'absolute',
+    top: 110,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  hintBadge: {
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  hintText: {
+    color: '#FEFCE8',
+    fontSize: 14,
+    fontWeight: '500',
   },
   controls: {
     position: 'absolute',

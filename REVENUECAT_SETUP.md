@@ -132,4 +132,3 @@ Common RevenueCat package identifiers:
 - Placeholder API keys are in the code - **must be replaced** before production
 - Backend sync happens automatically after successful purchase
 - User can restore purchases (not yet implemented in UI, but hook supports it)
-

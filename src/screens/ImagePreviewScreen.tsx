@@ -14,6 +14,7 @@ interface ImagePreviewScreenProps {
   image: string;
   mode: 'identify' | 'diagnose';
   source?: 'camera' | 'gallery';
+  onBack: () => void;
   onRetake: () => void;
   onContinue: () => void;
 }
@@ -22,6 +23,7 @@ export function ImagePreviewScreen({
   image,
   mode,
   source = 'camera',
+  onBack,
   onRetake,
   onContinue,
 }: ImagePreviewScreenProps) {
@@ -34,7 +36,7 @@ export function ImagePreviewScreen({
 
   return (
     <View className="flex-1 bg-background">
-      <Header title="Review Photo" showBack onBack={onRetake} />
+      <Header title="Review Photo" showBack onBack={onBack} />
 
       <ScrollView
         className="flex-1"
@@ -56,7 +58,7 @@ export function ImagePreviewScreen({
           {/* Helper Text */}
           <View className="pt-3 mb-8">
             <Text className="text-sm text-muted-foreground text-center leading-relaxed px-4">
-              Make sure the plant is clearly visible and in good lighting for best results.
+              Make sure the leaf is clearly visible and in good lighting for best results🍃
             </Text>
           </View>
 
