@@ -1,5 +1,5 @@
 import { API_ENDPOINTS } from '../config/api';
-import { extractApiError, categorizeError, UserFriendlyError, ErrorType } from '../utils/errorHandler';
+import { extractApiError, categorizeError, UserFriendlyError, ErrorType, isRetryableError } from '../utils/errorHandler';
 
 export interface PlantIdentificationResult {
   plant_name: string;
@@ -143,17 +143,75 @@ function safeJsonParse<T>(data: any): T {
   }
 }
 
+/**
+ * Retry configuration for transient errors
+ */
+interface RetryConfig {
+  maxRetries: number;
+  baseDelay: number; // milliseconds
+  maxDelay: number; // milliseconds
+}
+
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  maxRetries: 3,
+  baseDelay: 2000,
+  maxDelay: 8000,
+};
+
+/**
+ * Sleep utility for retry delays
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Execute an async function with automatic retry for transient errors
+ * Uses exponential backoff: 2s, 4s, 8s
+ */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  config: RetryConfig = DEFAULT_RETRY_CONFIG
+): Promise<T> {
+  let lastError: ApiError | null = null;
+
+  for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+
+      // Check if this error is retryable
+      const userFriendlyError = error.userFriendlyError || categorizeError(error);
+
+      // Don't retry non-retryable errors
+      if (!isRetryableError(userFriendlyError)) {
+        throw error;
+      }
+
+      // Don't retry if we've exhausted all attempts
+      if (attempt >= config.maxRetries) {
+        console.log(`[withRetry] All ${config.maxRetries} retries exhausted`);
+        throw error;
+      }
+
+      // Calculate delay with exponential backoff
+      const delay = Math.min(
+        config.baseDelay * Math.pow(2, attempt),
+        config.maxDelay
+      );
+
+      console.log(`[withRetry] Attempt ${attempt + 1} failed: ${error.message}. Retrying in ${delay}ms...`);
+      await sleep(delay);
+    }
+  }
+
+  // Should never reach here, but TypeScript needs it
+  throw lastError;
+}
+
 export async function identifyPlant(imageUri: string): Promise<PlantIdentificationResult> {
-  const formData = new FormData();
-
-  // Append file with proper image/jpeg content type
-  formData.append('file', {
-    uri: imageUri,
-    name: 'plant.jpg',
-    type: 'image/jpeg',
-  } as any);
-
-  // Get authentication token
+  // Get authentication token first (not retryable)
   const { storage } = await import('../utils/storage');
   const token = await storage.getToken();
 
@@ -163,122 +221,125 @@ export async function identifyPlant(imageUri: string): Promise<PlantIdentificati
     throw authError;
   }
 
-  let response: Response;
-  try {
-    response = await safeFetch(API_ENDPOINTS.IDENTIFY, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-    body: formData,
-    }, 30000); // 30 second timeout
-  } catch (error: any) {
-    // Network/timeout errors are already categorized
-    if (error.userFriendlyError) {
-      const apiError: ApiError = new Error(error.userFriendlyError.message);
-      apiError.userFriendlyError = error.userFriendlyError;
-      throw apiError;
-    }
-    // Re-throw with categorization
-    const apiError: ApiError = error instanceof Error ? error : new Error(String(error));
-    apiError.userFriendlyError = categorizeError(error);
-    throw apiError;
-  }
+  // Wrap the API call in retry logic for transient errors
+  return withRetry(async () => {
+    const formData = new FormData();
 
-  // Handle non-OK responses
-  if (!response.ok) {
+    // Append file with proper image/jpeg content type
+    formData.append('file', {
+      uri: imageUri,
+      name: 'plant.jpg',
+      type: 'image/jpeg',
+    } as any);
+
+    let response: Response;
     try {
-      const errorDetail = await extractApiError(response);
-      const apiError: ApiError = new Error(errorDetail);
-      apiError.statusCode = response.status;
-
-      // Special handling for 402 Payment Required
-      if (response.status === 402) {
-        apiError.userFriendlyError = categorizeError({
-          message: 'Payment required',
-          response: { status: 402 },
-        });
-      } else {
-        apiError.userFriendlyError = categorizeError({
-          message: errorDetail,
-          response: { status: response.status },
-        });
-      }
-      throw apiError;
+      response = await safeFetch(API_ENDPOINTS.IDENTIFY, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+      }, 30000); // 30 second timeout
     } catch (error: any) {
-      // If we can't parse the error, create a generic one
-      if (!error.userFriendlyError) {
-        const apiError: ApiError = new Error(`Server error (${response.status})`);
-        apiError.statusCode = response.status;
-        apiError.userFriendlyError = categorizeError({
-          message: `Server error (${response.status})`,
-          response: { status: response.status },
-        });
+      // Network/timeout errors are already categorized
+      if (error.userFriendlyError) {
+        const apiError: ApiError = new Error(error.userFriendlyError.message);
+        apiError.userFriendlyError = error.userFriendlyError;
         throw apiError;
       }
-      throw error;
+      // Re-throw with categorization
+      const apiError: ApiError = error instanceof Error ? error : new Error(String(error));
+      apiError.userFriendlyError = categorizeError(error);
+      throw apiError;
     }
-  }
 
-  // Parse response safely
-  let data: any;
-  try {
-    data = await response.json();
-  } catch (error) {
-    const parseError: ApiError = new Error('Invalid response format');
-    parseError.userFriendlyError = categorizeError({ message: 'Invalid JSON response' });
-    throw parseError;
-  }
+    // Handle non-OK responses
+    if (!response.ok) {
+      try {
+        const errorDetail = await extractApiError(response);
+        const apiError: ApiError = new Error(errorDetail);
+        apiError.statusCode = response.status;
 
-  // Validate response structure
-  if (!data || typeof data !== 'object') {
-    const validationError: ApiError = new Error('Invalid response format');
-    validationError.userFriendlyError = categorizeError({ message: 'Invalid response format' });
-    throw validationError;
-  }
+        // Special handling for 402 Payment Required
+        if (response.status === 402) {
+          apiError.userFriendlyError = categorizeError({
+            message: 'Payment required',
+            response: { status: 402 },
+          });
+        } else {
+          apiError.userFriendlyError = categorizeError({
+            message: errorDetail,
+            response: { status: response.status },
+          });
+        }
+        throw apiError;
+      } catch (error: any) {
+        // If we can't parse the error, create a generic one
+        if (!error.userFriendlyError) {
+          const apiError: ApiError = new Error(`Server error (${response.status})`);
+          apiError.statusCode = response.status;
+          apiError.userFriendlyError = categorizeError({
+            message: `Server error (${response.status})`,
+            response: { status: response.status },
+          });
+          throw apiError;
+        }
+        throw error;
+      }
+    }
 
-  // Check if identification failed (e.g., bad image quality)
-  if (data.success === false) {
-    const reason = data.reason || 'Unable to identify plant. Please try with a clearer image.';
-    const qualityError: ApiError = new Error(reason);
-    qualityError.userFriendlyError = {
-      type: ErrorType.BAD_IMAGE,
-      title: 'Image Quality Issue',
-      message: reason,
-      canRetry: true,
-    };
-    throw qualityError;
-  }
+    // Parse response safely
+    let data: any;
+    try {
+      data = await response.json();
+    } catch (error) {
+      const parseError: ApiError = new Error('Invalid response format');
+      parseError.userFriendlyError = categorizeError({ message: 'Invalid JSON response' });
+      throw parseError;
+    }
 
-  // Extract the first result from the API response
-  if (data.results && Array.isArray(data.results) && data.results.length > 0) {
-    const result = data.results[0];
-    // Validate result structure
-    if (!result.plant_name || typeof result.confidence === 'undefined') {
-      const validationError: ApiError = new Error('Invalid result format');
-      validationError.userFriendlyError = categorizeError({ message: 'Invalid result format' });
+    // Validate response structure
+    if (!data || typeof data !== 'object') {
+      const validationError: ApiError = new Error('Invalid response format');
+      validationError.userFriendlyError = categorizeError({ message: 'Invalid response format' });
       throw validationError;
     }
-    return result;
-  }
 
-  // No results found - could be bad image
-  const noResultsError: ApiError = new Error('No plant identification results found. Please ensure the image contains a clear view of a plant or leaf.');
-  noResultsError.userFriendlyError = categorizeError({ message: 'No plant identification results found' });
-  throw noResultsError;
+    // Check if identification failed (e.g., bad image quality)
+    if (data.success === false) {
+      const reason = data.reason || 'Unable to identify plant. Please try with a clearer image.';
+      const qualityError: ApiError = new Error(reason);
+      qualityError.userFriendlyError = {
+        type: ErrorType.BAD_IMAGE,
+        title: 'Image Quality Issue',
+        message: reason,
+        canRetry: true,
+      };
+      throw qualityError;
+    }
+
+    // Extract the first result from the API response
+    if (data.results && Array.isArray(data.results) && data.results.length > 0) {
+      const result = data.results[0];
+      // Validate result structure
+      if (!result.plant_name || typeof result.confidence === 'undefined') {
+        const validationError: ApiError = new Error('Invalid result format');
+        validationError.userFriendlyError = categorizeError({ message: 'Invalid result format' });
+        throw validationError;
+      }
+      return result;
+    }
+
+    // No results found - could be bad image
+    const noResultsError: ApiError = new Error('No plant identification results found. Please ensure the image contains a clear view of a plant or leaf.');
+    noResultsError.userFriendlyError = categorizeError({ message: 'No plant identification results found' });
+    throw noResultsError;
+  });
 }
 
 export async function diagnosePlant(imageUri: string): Promise<DiagnosisResult> {
-  const formData = new FormData();
-
-  // Append file with proper image/jpeg content type
-  formData.append('file', {
-    uri: imageUri,
-    name: 'plant.jpg',
-    type: 'image/jpeg',
-  } as any);
-
-  // Get authentication token
+  // Get authentication token first (not retryable)
   const { storage } = await import('../utils/storage');
   const token = await storage.getToken();
 
@@ -290,123 +351,135 @@ export async function diagnosePlant(imageUri: string): Promise<DiagnosisResult> 
     throw authError;
   }
 
-  console.log('[diagnosePlant] Making request to:', API_ENDPOINTS.DIAGNOSE);
-  console.log('[diagnosePlant] Authorization header:', `Bearer ${token.substring(0, 20)}...`);
+  // Wrap the API call in retry logic for transient errors
+  return withRetry(async () => {
+    const formData = new FormData();
 
-  let response: Response;
-  try {
-    response = await safeFetch(API_ENDPOINTS.DIAGNOSE, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-    body: formData,
-    }, 60000); // 60 second timeout (first request loads ML models)
+    // Append file with proper image/jpeg content type
+    formData.append('file', {
+      uri: imageUri,
+      name: 'plant.jpg',
+      type: 'image/jpeg',
+    } as any);
 
-    console.log('[diagnosePlant] Response status:', response.status);
-  } catch (error: any) {
-    // Network/timeout errors are already categorized
-    if (error.userFriendlyError) {
-      const apiError: ApiError = new Error(error.userFriendlyError.message);
-      apiError.userFriendlyError = error.userFriendlyError;
-      throw apiError;
-    }
-    // Re-throw with categorization
-    const apiError: ApiError = error instanceof Error ? error : new Error(String(error));
-    apiError.userFriendlyError = categorizeError(error);
-    throw apiError;
-  }
+    console.log('[diagnosePlant] Making request to:', API_ENDPOINTS.DIAGNOSE);
+    console.log('[diagnosePlant] Authorization header:', `Bearer ${token.substring(0, 20)}...`);
 
-  // Handle non-OK responses
-  if (!response.ok) {
+    let response: Response;
     try {
-      const errorDetail = await extractApiError(response);
-      const apiError: ApiError = new Error(errorDetail);
-      apiError.statusCode = response.status;
+      response = await safeFetch(API_ENDPOINTS.DIAGNOSE, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+      }, 60000); // 60 second timeout (first request loads ML models)
 
-      // Special handling for 402 Payment Required
-      if (response.status === 402) {
-        apiError.userFriendlyError = categorizeError({
-          message: 'Payment required',
-          response: { status: 402 },
-        });
-      } else {
-        apiError.userFriendlyError = categorizeError({
-          message: errorDetail,
-          response: { status: response.status },
-        });
-      }
-      throw apiError;
+      console.log('[diagnosePlant] Response status:', response.status);
     } catch (error: any) {
-      // If we can't parse the error, create a generic one
-      if (!error.userFriendlyError) {
-        const apiError: ApiError = new Error(`Server error (${response.status})`);
-        apiError.statusCode = response.status;
-        apiError.userFriendlyError = categorizeError({
-          message: `Server error (${response.status})`,
-          response: { status: response.status },
-        });
+      // Network/timeout errors are already categorized
+      if (error.userFriendlyError) {
+        const apiError: ApiError = new Error(error.userFriendlyError.message);
+        apiError.userFriendlyError = error.userFriendlyError;
         throw apiError;
       }
-      throw error;
+      // Re-throw with categorization
+      const apiError: ApiError = error instanceof Error ? error : new Error(String(error));
+      apiError.userFriendlyError = categorizeError(error);
+      throw apiError;
     }
-  }
 
-  // Parse response safely
-  let rawData: any;
-  try {
-    rawData = await response.json();
-    console.log('[diagnosePlant] Response data:', JSON.stringify(rawData, null, 2));
-  } catch (error) {
-    const parseError: ApiError = new Error('Invalid response format');
-    parseError.userFriendlyError = categorizeError({ message: 'Invalid JSON response' });
-    throw parseError;
-  }
+    // Handle non-OK responses
+    if (!response.ok) {
+      try {
+        const errorDetail = await extractApiError(response);
+        const apiError: ApiError = new Error(errorDetail);
+        apiError.statusCode = response.status;
 
-  // Validate response structure
-  if (!rawData || typeof rawData !== 'object') {
-    const validationError: ApiError = new Error('Invalid response format');
-    validationError.userFriendlyError = categorizeError({ message: 'Invalid response format' });
-    throw validationError;
-  }
+        // Special handling for 402 Payment Required
+        if (response.status === 402) {
+          apiError.userFriendlyError = categorizeError({
+            message: 'Payment required',
+            response: { status: 402 },
+          });
+        } else {
+          apiError.userFriendlyError = categorizeError({
+            message: errorDetail,
+            response: { status: response.status },
+          });
+        }
+        throw apiError;
+      } catch (error: any) {
+        // If we can't parse the error, create a generic one
+        if (!error.userFriendlyError) {
+          const apiError: ApiError = new Error(`Server error (${response.status})`);
+          apiError.statusCode = response.status;
+          apiError.userFriendlyError = categorizeError({
+            message: `Server error (${response.status})`,
+            response: { status: response.status },
+          });
+          throw apiError;
+        }
+        throw error;
+      }
+    }
 
-  // Check if diagnosis was successful
-  if (rawData.success === false) {
-    const diagnosisError: ApiError = new Error(rawData.message || 'Diagnosis failed');
-    diagnosisError.userFriendlyError = categorizeError({
-      message: rawData.message || 'Unable to diagnose the plant. Please try again with a clearer image.'
-    });
-    throw diagnosisError;
-  }
+    // Parse response safely
+    let rawData: any;
+    try {
+      rawData = await response.json();
+      console.log('[diagnosePlant] Response data:', JSON.stringify(rawData, null, 2));
+    } catch (error) {
+      const parseError: ApiError = new Error('Invalid response format');
+      parseError.userFriendlyError = categorizeError({ message: 'Invalid JSON response' });
+      throw parseError;
+    }
 
-  // Transform backend response to DiagnosisResult format
-  // Backend returns: { success: true, diagnoses: [...], ... }
-  // Frontend expects: { condition: string, confidence: number, ... }
+    // Validate response structure
+    if (!rawData || typeof rawData !== 'object') {
+      const validationError: ApiError = new Error('Invalid response format');
+      validationError.userFriendlyError = categorizeError({ message: 'Invalid response format' });
+      throw validationError;
+    }
 
-  if (!rawData.diagnoses || !Array.isArray(rawData.diagnoses) || rawData.diagnoses.length === 0) {
-    const noResultsError: ApiError = new Error('No diagnosis results found');
-    noResultsError.userFriendlyError = categorizeError({
-      message: 'No diagnosis results found. Please try again with a clearer image of the plant.'
-    });
-    throw noResultsError;
-  }
+    // Check if diagnosis was successful
+    if (rawData.success === false) {
+      const diagnosisError: ApiError = new Error(rawData.message || 'Diagnosis failed');
+      diagnosisError.userFriendlyError = categorizeError({
+        message: rawData.message || 'Unable to diagnose the plant. Please try again with a clearer image.'
+      });
+      throw diagnosisError;
+    }
 
-  // Extract the primary diagnosis (first one, which has the highest confidence)
-  const primaryDiagnosis = rawData.diagnoses[0];
+    // Transform backend response to DiagnosisResult format
+    // Backend returns: { success: true, diagnoses: [...], ... }
+    // Frontend expects: { condition: string, confidence: number, ... }
 
-  // Transform to expected format
-  const data: DiagnosisResult = {
-    condition: primaryDiagnosis.name || primaryDiagnosis.normalized_label || 'Unknown',
-    confidence: primaryDiagnosis.confidence || 0, // Already in 0-100 scale from backend
-    symptoms: primaryDiagnosis.symptoms || [],
-    causes: primaryDiagnosis.causes || [],
-    treatment: primaryDiagnosis.treatment || [],
-    category: primaryDiagnosis.category,
-    severity: primaryDiagnosis.severity,
-    plant_name: rawData.plant_name || undefined,
-  };
+    if (!rawData.diagnoses || !Array.isArray(rawData.diagnoses) || rawData.diagnoses.length === 0) {
+      const noResultsError: ApiError = new Error('No diagnosis results found');
+      noResultsError.userFriendlyError = categorizeError({
+        message: 'No diagnosis results found. Please try again with a clearer image of the plant.'
+      });
+      throw noResultsError;
+    }
 
-  return data;
+    // Extract the primary diagnosis (first one, which has the highest confidence)
+    const primaryDiagnosis = rawData.diagnoses[0];
+
+    // Transform to expected format
+    const data: DiagnosisResult = {
+      condition: primaryDiagnosis.name || primaryDiagnosis.normalized_label || 'Unknown',
+      confidence: primaryDiagnosis.confidence || 0, // Already in 0-100 scale from backend
+      symptoms: primaryDiagnosis.symptoms || [],
+      causes: primaryDiagnosis.causes || [],
+      treatment: primaryDiagnosis.treatment || [],
+      category: primaryDiagnosis.category,
+      severity: primaryDiagnosis.severity,
+      plant_name: rawData.plant_name || undefined,
+    };
+
+    return data;
+  });
 }
 
 export async function registerUser(
@@ -558,6 +631,161 @@ export async function loginUser(email: string, password: string): Promise<AuthRe
     const validationError: ApiError = new Error('Invalid login response');
     validationError.userFriendlyError = categorizeError({ message: 'Invalid login response' });
     throw validationError;
+  }
+
+  return data;
+}
+
+// Password Reset Functions
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface VerifyOTPResponse {
+  valid: boolean;
+  reset_token: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}
+
+export async function requestPasswordReset(email: string): Promise<ForgotPasswordResponse> {
+  let response: Response;
+  try {
+    response = await safeFetch(API_ENDPOINTS.FORGOT_PASSWORD, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    }, 15000);
+  } catch (error: any) {
+    if (error.userFriendlyError) {
+      const apiError: ApiError = new Error(error.userFriendlyError.message);
+      apiError.userFriendlyError = error.userFriendlyError;
+      throw apiError;
+    }
+    const apiError: ApiError = error instanceof Error ? error : new Error(String(error));
+    apiError.userFriendlyError = categorizeError(error);
+    throw apiError;
+  }
+
+  if (!response.ok) {
+    const errorDetail = await extractApiError(response);
+    const apiError: ApiError = new Error(errorDetail);
+    apiError.statusCode = response.status;
+    apiError.userFriendlyError = categorizeError({
+      message: errorDetail,
+      response: { status: response.status },
+    });
+    throw apiError;
+  }
+
+  let data: ForgotPasswordResponse;
+  try {
+    data = await response.json();
+  } catch (error) {
+    const parseError: ApiError = new Error('Invalid response format');
+    parseError.userFriendlyError = categorizeError({ message: 'Invalid JSON response' });
+    throw parseError;
+  }
+
+  return data;
+}
+
+export async function verifyResetOTP(email: string, otp: string): Promise<VerifyOTPResponse> {
+  let response: Response;
+  try {
+    response = await safeFetch(API_ENDPOINTS.VERIFY_RESET_OTP, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, otp }),
+    }, 15000);
+  } catch (error: any) {
+    if (error.userFriendlyError) {
+      const apiError: ApiError = new Error(error.userFriendlyError.message);
+      apiError.userFriendlyError = error.userFriendlyError;
+      throw apiError;
+    }
+    const apiError: ApiError = error instanceof Error ? error : new Error(String(error));
+    apiError.userFriendlyError = categorizeError(error);
+    throw apiError;
+  }
+
+  if (!response.ok) {
+    const errorDetail = await extractApiError(response);
+    const apiError: ApiError = new Error(errorDetail);
+    apiError.statusCode = response.status;
+    apiError.userFriendlyError = categorizeError({
+      message: errorDetail,
+      response: { status: response.status },
+    });
+    throw apiError;
+  }
+
+  let data: VerifyOTPResponse;
+  try {
+    data = await response.json();
+  } catch (error) {
+    const parseError: ApiError = new Error('Invalid response format');
+    parseError.userFriendlyError = categorizeError({ message: 'Invalid JSON response' });
+    throw parseError;
+  }
+
+  return data;
+}
+
+export async function resetPassword(
+  email: string,
+  resetToken: string,
+  newPassword: string
+): Promise<ResetPasswordResponse> {
+  let response: Response;
+  try {
+    response = await safeFetch(API_ENDPOINTS.RESET_PASSWORD, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        reset_token: resetToken,
+        new_password: newPassword,
+      }),
+    }, 15000);
+  } catch (error: any) {
+    if (error.userFriendlyError) {
+      const apiError: ApiError = new Error(error.userFriendlyError.message);
+      apiError.userFriendlyError = error.userFriendlyError;
+      throw apiError;
+    }
+    const apiError: ApiError = error instanceof Error ? error : new Error(String(error));
+    apiError.userFriendlyError = categorizeError(error);
+    throw apiError;
+  }
+
+  if (!response.ok) {
+    const errorDetail = await extractApiError(response);
+    const apiError: ApiError = new Error(errorDetail);
+    apiError.statusCode = response.status;
+    apiError.userFriendlyError = categorizeError({
+      message: errorDetail,
+      response: { status: response.status },
+    });
+    throw apiError;
+  }
+
+  let data: ResetPasswordResponse;
+  try {
+    data = await response.json();
+  } catch (error) {
+    const parseError: ApiError = new Error('Invalid response format');
+    parseError.userFriendlyError = categorizeError({ message: 'Invalid JSON response' });
+    throw parseError;
   }
 
   return data;

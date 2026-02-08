@@ -384,7 +384,7 @@ export function UpgradeModal({
   className="border border-border bg-[#F2F6F5]"
   style={{ shadowOpacity: 0, elevation: 0 }}
 >
-        Apply Coupon
+      <Text className="text-sm font-semibold mb-3">Apply Coupon</Text>
 
       <View className="flex-row gap-4">
         <TextInput

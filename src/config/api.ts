@@ -1,4 +1,5 @@
 // API Configuration
+// Revenuecat Android goog_pDPsssSURWwfWcergnclpenWTrC
 // Update this URL to match your backend server
 // For Android Emulator: use 10.0.2.2 to access host machine's localhost
 // For iOS Simulator: use localhost
@@ -49,6 +50,9 @@ export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/api/v1/auth/login`,
   LOGOUT: `${API_BASE_URL}/api/v1/auth/logout`,
   RESEND_VERIFICATION: `${API_BASE_URL}/api/v1/auth/resend-verification`,
+  FORGOT_PASSWORD: `${API_BASE_URL}/api/v1/auth/forgot-password`,
+  VERIFY_RESET_OTP: `${API_BASE_URL}/api/v1/auth/verify-reset-otp`,
+  RESET_PASSWORD: `${API_BASE_URL}/api/v1/auth/reset-password`,
 
   // User endpoints (all require authentication)
   PROFILE: `${API_BASE_URL}/api/v1/users/me`,

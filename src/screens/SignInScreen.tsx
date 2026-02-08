@@ -8,11 +8,12 @@ interface SignInScreenProps {
   onSignIn: (email: string, password: string) => void;
   onBack: () => void;
   onRegister: () => void;
+  onForgotPassword: () => void;
   isLoading?: boolean;
   error?: string | null;
 }
 
-export function SignInScreen({ onSignIn, onBack, onRegister, isLoading, error }: SignInScreenProps) {
+export function SignInScreen({ onSignIn, onBack, onRegister, onForgotPassword, isLoading, error }: SignInScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({ email: '', password: '' });
@@ -86,6 +87,10 @@ export function SignInScreen({ onSignIn, onBack, onRegister, isLoading, error }:
               onChangeText={setPassword}
               error={errors.password}
             />
+
+            <TouchableOpacity onPress={onForgotPassword} className="self-end mt-2">
+              <Text className="text-sm text-primary font-medium">Forgot Password?</Text>
+            </TouchableOpacity>
           </View>
 
           {/* API Error Display */}

@@ -6,10 +6,13 @@ import { WelcomeScreen } from "../screens/WelcomeScreen";
 import { SignInScreen } from "../screens/SignInScreen";
 import { RegisterScreen } from "../screens/RegisterScreen";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
+import { ForgotPasswordScreen } from "../screens/ForgotPasswordScreen";
+import { VerifyOTPScreen } from "../screens/VerifyOTPScreen";
+import { ResetPasswordScreen } from "../screens/ResetPasswordScreen";
 import { AuthScreen } from "./types";
 import Toast from "react-native-toast-message";
 import { storage, UserType, PlantType } from "../utils/storage";
-import { registerUser, loginUser, updateUserProfile } from "../services/api";
+import { registerUser, loginUser, updateUserProfile, requestPasswordReset, verifyResetOTP, resetPassword } from "../services/api";
 
 interface AuthNavigatorProps {
   onAuthenticated: (token?: string) => void;
@@ -20,6 +23,17 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
   const [userName, setUserName] = React.useState<string>('');
   const [signInLoading, setSignInLoading] = React.useState(false);
   const [signInError, setSignInError] = React.useState<string | null>(null);
+
+  // Password reset state
+  const [resetEmail, setResetEmail] = React.useState<string>('');
+  const [resetToken, setResetToken] = React.useState<string>('');
+  const [forgotPasswordLoading, setForgotPasswordLoading] = React.useState(false);
+  const [forgotPasswordError, setForgotPasswordError] = React.useState<string | null>(null);
+  const [verifyOtpLoading, setVerifyOtpLoading] = React.useState(false);
+  const [verifyOtpError, setVerifyOtpError] = React.useState<string | null>(null);
+  const [resendingOtp, setResendingOtp] = React.useState(false);
+  const [resetPasswordLoading, setResetPasswordLoading] = React.useState(false);
+  const [resetPasswordError, setResetPasswordError] = React.useState<string | null>(null);
 
   const handleGetStarted = () => {
     setCurrentScreen('register');
@@ -179,6 +193,84 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
     onAuthenticated(token || undefined);
   };
 
+  // Password Reset Handlers
+  const handleForgotPassword = async (email: string) => {
+    console.log('[AuthNavigator] Forgot password for:', email);
+    setForgotPasswordLoading(true);
+    setForgotPasswordError(null);
+
+    try {
+      await requestPasswordReset(email);
+      setResetEmail(email);
+      Toast.show({ type: 'success', text1: 'Check your email', text2: 'We sent you a verification code' });
+      setCurrentScreen('verify-otp');
+    } catch (error: any) {
+      console.error('[AuthNavigator] Error requesting password reset:', error);
+      const errorMessage = error.userFriendlyError?.message || error.message || 'Failed to send reset code';
+      setForgotPasswordError(errorMessage);
+    } finally {
+      setForgotPasswordLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (otp: string) => {
+    console.log('[AuthNavigator] Verifying OTP for:', resetEmail);
+    setVerifyOtpLoading(true);
+    setVerifyOtpError(null);
+
+    try {
+      const response = await verifyResetOTP(resetEmail, otp);
+      setResetToken(response.reset_token);
+      setCurrentScreen('reset-password');
+    } catch (error: any) {
+      console.error('[AuthNavigator] Error verifying OTP:', error);
+      const errorMessage = error.userFriendlyError?.message || error.message || 'Invalid or expired code';
+      setVerifyOtpError(errorMessage);
+    } finally {
+      setVerifyOtpLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    console.log('[AuthNavigator] Resending OTP to:', resetEmail);
+    setResendingOtp(true);
+
+    try {
+      await requestPasswordReset(resetEmail);
+      Toast.show({ type: 'success', text1: 'Code sent', text2: 'Check your email for a new code' });
+    } catch (error: any) {
+      console.error('[AuthNavigator] Error resending OTP:', error);
+      const errorMessage = error.userFriendlyError?.message || error.message || 'Failed to resend code';
+      Toast.show({ type: 'error', text1: 'Failed to resend', text2: errorMessage });
+    } finally {
+      setResendingOtp(false);
+    }
+  };
+
+  const handleResetPassword = async (newPassword: string) => {
+    console.log('[AuthNavigator] Resetting password for:', resetEmail);
+    setResetPasswordLoading(true);
+    setResetPasswordError(null);
+
+    try {
+      await resetPassword(resetEmail, resetToken, newPassword);
+      Toast.show({ type: 'success', text1: 'Password reset!', text2: 'You can now sign in with your new password' });
+
+      // Clear reset state
+      setResetEmail('');
+      setResetToken('');
+
+      // Navigate to sign in
+      setCurrentScreen('signin');
+    } catch (error: any) {
+      console.error('[AuthNavigator] Error resetting password:', error);
+      const errorMessage = error.userFriendlyError?.message || error.message || 'Failed to reset password';
+      setResetPasswordError(errorMessage);
+    } finally {
+      setResetPasswordLoading(false);
+    }
+  };
+
   return (
     <>
       {currentScreen === 'welcome' && (
@@ -193,6 +285,7 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
           onSignIn={handleSignIn}
           onBack={() => setCurrentScreen('welcome')}
           onRegister={() => setCurrentScreen('register')}
+          onForgotPassword={() => setCurrentScreen('forgot-password')}
           isLoading={signInLoading}
           error={signInError}
         />
@@ -211,6 +304,36 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
           userName={userName}
           onComplete={handleOnboardingComplete}
           onSkip={handleOnboardingSkip}
+        />
+      )}
+
+      {currentScreen === 'forgot-password' && (
+        <ForgotPasswordScreen
+          onSubmit={handleForgotPassword}
+          onBack={() => setCurrentScreen('signin')}
+          isLoading={forgotPasswordLoading}
+          error={forgotPasswordError}
+        />
+      )}
+
+      {currentScreen === 'verify-otp' && (
+        <VerifyOTPScreen
+          email={resetEmail}
+          onVerify={handleVerifyOtp}
+          onResend={handleResendOtp}
+          onBack={() => setCurrentScreen('forgot-password')}
+          isLoading={verifyOtpLoading}
+          isResending={resendingOtp}
+          error={verifyOtpError}
+        />
+      )}
+
+      {currentScreen === 'reset-password' && (
+        <ResetPasswordScreen
+          onSubmit={handleResetPassword}
+          onBack={() => setCurrentScreen('verify-otp')}
+          isLoading={resetPasswordLoading}
+          error={resetPasswordError}
         />
       )}
     </>
