@@ -18,7 +18,6 @@ import {
 } from '../services/api';
 import Toast from 'react-native-toast-message';
 import { normalizePlantKey } from '../utils/formatters';
-import { PLANT_INFO } from '../data/plants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AnalysisScreenProps {
@@ -125,6 +124,7 @@ export function AnalysisScreen({
         if (scanType === 'identify' && 'plant_name' in result && result.plant_name) {
           const identifyResult = result as PlantIdentificationResult;
           const key = normalizePlantKey(identifyResult.plant_name);
+          const { PLANT_INFO } = await import('../data/plants');
           const localPlantInfo = (PLANT_INFO as any)[key];
 
           if (localPlantInfo) {

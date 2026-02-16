@@ -49,7 +49,7 @@ export function WelcomeScreen({
               {/* Hero image */}
               <View className="items-center">
                 <Image
-                  source={require("../../assets/welcome-photo.png")}
+                  source={require("../../assets/welcome-photo.webp")}
                   style={{ width: 120, height: 120 }}
                   resizeMode="contain"
                 />

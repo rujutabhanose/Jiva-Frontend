@@ -1,5 +1,4 @@
 // API Configuration
-// Revenuecat Android goog_pDPsssSURWwfWcergnclpenWTrC
 // Update this URL to match your backend server
 // For Android Emulator: use 10.0.2.2 to access host machine's localhost
 // For iOS Simulator: use localhost
@@ -34,15 +33,20 @@ function getApiBaseUrl(): string {
 
 export const API_BASE_URL = getApiBaseUrl();
 
-// RevenueCat Configuration
-// Get your key from: https://app.revenuecat.com/settings/api-keys
-// IMPORTANT: Replace this with your actual Public API Key from RevenueCat Dashboard
-// Note: RevenueCat uses a single key for both iOS and Android
+// RevenueCat Configuration - Platform-specific keys from .env
+// Get your keys from: https://app.revenuecat.com/settings/api-keys
+function getRevenueCatApiKey(): string {
+  if (Platform.OS === 'android') {
+    return process.env.REACT_APP_REVENUECAT_ANDROID_KEY || '';
+  } else {
+    return process.env.REACT_APP_REVENUECAT_IOS_KEY || '';
+  }
+}
 
-// Set to true to bypass RevenueCat and use mock purchases for development
-export const REVENUECAT_DEV_MODE = true;
+// Set to false for production (currently using production keys)
+export const REVENUECAT_DEV_MODE = false;
 
-export const REVENUECAT_API_KEY = 'test_NXiVqrhMWaLrIbqvccrpvBTZofA';
+export const REVENUECAT_API_KEY = getRevenueCatApiKey();
 
 export const API_ENDPOINTS = {
   // Auth endpoints
