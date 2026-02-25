@@ -15,7 +15,7 @@ const LOCAL_IP = '192.168.0.121';
 // Get the appropriate base URL based on platform and device type
 function getApiBaseUrl(): string {
   if (!__DEV__) {
-    return 'https://your-production-api.com'; // Production
+    return 'https://api.jivaplants.com'; // Production
   }
 
   // Running on physical device - use computer's IP
@@ -27,19 +27,24 @@ function getApiBaseUrl(): string {
   if (Platform.OS === 'android') {
     return 'http://10.0.2.2:8000';  // Android Emulator
   } else {
-    return 'http://localhost:8000';  // iOS Simulator
+    return 'https://api.jivaplants.com';  // iOS Simulator → production server
   }
 }
 
 export const API_BASE_URL = getApiBaseUrl();
 
-// RevenueCat Configuration - Platform-specific keys from .env
+// RevenueCat Configuration - Platform-specific keys
 // Get your keys from: https://app.revenuecat.com/settings/api-keys
+const REVENUECAT_KEYS = {
+  android: 'goog_pDPsssSURWwfWcergnclpenWTrC',
+  ios: 'appl_xwEZFQSlbQZjWAJQptbEUQspMot',
+};
+
 function getRevenueCatApiKey(): string {
   if (Platform.OS === 'android') {
-    return process.env.REACT_APP_REVENUECAT_ANDROID_KEY || '';
+    return REVENUECAT_KEYS.android;
   } else {
-    return process.env.REACT_APP_REVENUECAT_IOS_KEY || '';
+    return REVENUECAT_KEYS.ios;
   }
 }
 

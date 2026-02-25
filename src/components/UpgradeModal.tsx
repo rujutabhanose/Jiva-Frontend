@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, Pressable, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { X, Check, Zap, Shield, Tag, AlertCircle } from 'lucide-react-native';
@@ -30,56 +30,66 @@ export function UpgradeModal({
   scansLimit
 }: UpgradeModalProps) {
   console.log('[UpgradeModal] Component rendering with deviceId prop:', deviceId);
-  const { offerings, purchasePackage, isLoading: isPurchasing, error: purchaseError } = usePurchases();
+  const { offerings, purchasePackage, isLoading: isPurchasing, error: purchaseError, retryFetchOfferings } = usePurchases();
   const [couponCode, setCouponCode] = useState('');
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [couponError, setCouponError] = useState('');
   const [couponSuccess, setCouponSuccess] = useState('');
   const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
   const [showCoupon, setShowCoupon] = useState(false);
+  const [purchaseErrorMessage, setPurchaseErrorMessage] = useState<string | null>(null);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+
+  // Derive packages from offerings once, reuse in both the press handlers and the price display
+  const monthlyPackage = offerings?.availablePackages.find(
+    pkg => pkg.identifier.includes('monthly') || pkg.identifier.includes('month')
+  ) ?? offerings?.availablePackages[0];
+
+  const yearlyPackage = offerings?.availablePackages.find(
+    pkg => pkg.identifier.includes('annual') || pkg.identifier.includes('year') || pkg.identifier.includes('yearly')
+  ) ?? offerings?.availablePackages.find(pkg => pkg !== offerings?.availablePackages[0])
+    ?? offerings?.availablePackages[0];
+
+  const isButtonsDisabled = isProcessingPurchase || isPurchasing || !offerings || (!monthlyPackage && !yearlyPackage);
+
+  // Prices from RevenueCat — locale-aware and always up to date
+  const monthlyPriceString = monthlyPackage?.product.priceString ?? '—';
+  const yearlyPriceString = yearlyPackage?.product.priceString ?? '—';
+
+  // Derived display values for yearly card
+  const yearlyPriceNum = yearlyPackage?.product.price ?? 0;
+  const monthlyPriceNum = monthlyPackage?.product.price ?? 0;
+  const currencyCode = yearlyPackage?.product.currencyCode ?? 'USD';
+  const fmt = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: currencyCode, minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const perMonthString = yearlyPriceNum > 0 ? fmt(yearlyPriceNum / 12) : '—';
+  const fullYearlyString = monthlyPriceNum > 0 ? fmt(monthlyPriceNum * 12) : '—';
+  const yearlySavingsString = monthlyPriceNum > 0 && yearlyPriceNum > 0 ? fmt(monthlyPriceNum * 12 - yearlyPriceNum) : null;
 
   const handlePurchase = async (pkg: PurchasesPackage, planType: 'monthly' | 'yearly') => {
-    console.log('[UpgradeModal] handlePurchase called, using deviceId prop:', deviceId);
+    setDebugLog(l => [...l, `handlePurchase: ${pkg.identifier}`]);
+    setPurchaseErrorMessage(null);
     setIsProcessingPurchase(true);
     try {
+      setDebugLog(l => [...l, 'calling purchasePackage...']);
       const result = await purchasePackage(pkg, deviceId);
-      
+      setDebugLog(l => [...l, `result: success=${result.success} msg=${result.message}`]);
+
       if (result.success) {
-        Toast.show({ 
-          type: 'success', 
-          text1: 'Upgrade Successful!',
-          text2: result.message
-        });
-        
-        // Call onSelectPlan for backward compatibility
         onSelectPlan(planType);
-        
-        // Call onUpgradeSuccess if provided
         if (onUpgradeSuccess) {
           onUpgradeSuccess();
         }
-        
-        // Close modal after short delay
         setTimeout(() => {
           onClose();
         }, 1500);
       } else {
-        // Don't show error for user cancellation
         if (result.message !== 'Purchase was cancelled.') {
-          Toast.show({ 
-            type: 'error', 
-            text1: 'Purchase Failed',
-            text2: result.message
-          });
+          setPurchaseErrorMessage(result.message);
         }
       }
     } catch (error: any) {
       console.error('[UpgradeModal] Purchase error:', error);
-      Toast.show({ 
-        type: 'error', 
-        text1: 'Purchase Failed',
-        text2: error.message || 'An error occurred during purchase'
-      });
+      setPurchaseErrorMessage(error.message || 'An error occurred during purchase');
     } finally {
       setIsProcessingPurchase(false);
     }
@@ -155,6 +165,38 @@ export function UpgradeModal({
     maxHeight: '90%', // ✅ Android needs this
   }}
 >
+  {/* ── Always-visible diagnostic banner (above ScrollView, never scrolls away) ── */}
+  {(purchaseErrorMessage || (offerings && !monthlyPackage && !yearlyPackage) || (!offerings && !isPurchasing && !purchaseError)) && (
+    <View style={{ backgroundColor: '#FEE2E2', borderColor: '#FCA5A5', borderWidth: 1, borderRadius: 10, margin: 12, padding: 12 }}>
+      <Text style={{ color: '#B91C1C', fontSize: 13, textAlign: 'center', fontWeight: '600' }}>
+        {purchaseErrorMessage
+          ?? (offerings && !monthlyPackage && !yearlyPackage
+            ? 'Products unavailable: offerings loaded but no packages returned from App Store. Check App Store Connect product status (currently READY_TO_SUBMIT).'
+            : 'Could not load plans — offerings returned empty. Check RevenueCat dashboard.')}
+      </Text>
+    </View>
+  )}
+  {/* ── Always-visible state — shows without any tap ── */}
+  <View style={{ backgroundColor: '#EFF6FF', borderColor: '#93C5FD', borderWidth: 1, borderRadius: 10, margin: 12, marginTop: 0, padding: 10 }}>
+    <Text style={{ color: '#1D4ED8', fontSize: 11, fontWeight: 'bold', marginBottom: 2 }}>DEBUG STATE</Text>
+    <Text style={{ color: '#1D4ED8', fontSize: 11 }}>disabled: {String(isButtonsDisabled)}</Text>
+    <Text style={{ color: '#1D4ED8', fontSize: 11 }}>isPurchasing: {String(isPurchasing)}</Text>
+    <Text style={{ color: '#1D4ED8', fontSize: 11 }}>isProcessing: {String(isProcessingPurchase)}</Text>
+    <Text style={{ color: '#1D4ED8', fontSize: 11 }}>offerings: {offerings ? 'loaded' : 'null'}</Text>
+    <Text style={{ color: '#1D4ED8', fontSize: 11 }}>monthlyPkg: {monthlyPackage?.identifier ?? 'null'}</Text>
+    <Text style={{ color: '#1D4ED8', fontSize: 11 }}>yearlyPkg: {yearlyPackage?.identifier ?? 'null'}</Text>
+    <Text style={{ color: '#1D4ED8', fontSize: 11 }}>purchaseError: {purchaseError ?? 'null'}</Text>
+    {debugLog.map((line, i) => (
+      <Text key={i} style={{ color: '#1E40AF', fontSize: 11, marginTop: 2 }}>{line}</Text>
+    ))}
+  </View>
+  {isProcessingPurchase && (
+    <View style={{ alignItems: 'center', paddingVertical: 8 }}>
+      <ActivityIndicator size="small" color="#3F7C4C" />
+      <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Processing...</Text>
+    </View>
+  )}
+
   <ScrollView
     showsVerticalScrollIndicator={false}
     contentContainerStyle={{ paddingBottom: 24 }}
@@ -246,29 +288,35 @@ export function UpgradeModal({
                 <ActivityIndicator size="large" color="#3F7C4C" />
                 <Text className="text-sm text-muted-foreground mt-4">Loading pricing plans...</Text>
               </View>
+            ) : !offerings && purchaseError ? (
+              <View className="py-8 items-center gap-3">
+                <AlertCircle size={32} color="#D08A4E" />
+                <Text className="text-sm text-muted-foreground text-center">
+                  Could not load subscription plans. Please check your connection and try again.
+                </Text>
+                <TouchableOpacity
+                  onPress={retryFetchOfferings}
+                  className="mt-2 px-6 py-3 bg-primary rounded-xl"
+                  activeOpacity={0.8}
+                >
+                  <Text className="text-white font-semibold text-sm">Retry</Text>
+                </TouchableOpacity>
+              </View>
             ) : (
               <View className="space-y-4 mb-6">
                 {/* Monthly Plan */}
-                <TouchableOpacity
+                <Pressable
                   onPress={async () => {
-                    if (!offerings?.availablePackages || offerings.availablePackages.length === 0) {
-                      Toast.show({
-                        type: 'error',
-                        text1: 'No packages available',
-                        text2: 'Please check your internet connection and try again'
-                      });
+                    setDebugLog(l => [...l, `[${new Date().toLocaleTimeString()}] Monthly tapped | pkg: ${monthlyPackage?.identifier ?? 'null'} | disabled: ${isButtonsDisabled}`]);
+                    if (!monthlyPackage) {
+                      setPurchaseErrorMessage('No packages available. Please check your internet connection and try again.');
                       return;
                     }
-
-                    // Find monthly package (usually $rc_monthly or similar)
-                    const monthlyPackage = offerings.availablePackages.find(
-                      pkg => pkg.identifier.includes('monthly') || pkg.identifier.includes('month')
-                    ) || offerings.availablePackages[0]; // Fallback to first package
-
                     await handlePurchase(monthlyPackage, 'monthly');
                   }}
-                  disabled={isProcessingPurchase || isPurchasing || !offerings}
-                  activeOpacity={0.7}
+                  onPressIn={() => setDebugLog(l => [...l, `[${new Date().toLocaleTimeString()}] Monthly — press IN detected`])}
+                  disabled={isButtonsDisabled}
+                  style={{ opacity: isButtonsDisabled ? 0.5 : 1 }}
                 >
                 <Card
   className="border-2 border-border bg-[#F2F6F5]"
@@ -280,40 +328,30 @@ export function UpgradeModal({
       <Text className="text-sm text-muted-foreground">Billed monthly</Text>
     </View>
     <View className="items-end justify-center">
-      <Text className="text-2xl font-bold">$2.99</Text>
+      <Text className="text-2xl font-bold">{monthlyPriceString}</Text>
       <Text className="text-xs text-muted-foreground">/month</Text>
     </View>
   </View>
 </Card>
 
-              </TouchableOpacity>
+              </Pressable>
 
               {/* Spacer between plans */}
               <View className="h-4" />
 
               {/* Yearly Plan (Popular) */}
-              <TouchableOpacity
+              <Pressable
                 onPress={async () => {
-                  if (!offerings?.availablePackages) {
-                    Toast.show({
-                      type: 'error',
-                      text1: 'No packages available',
-                      text2: 'Please check your internet connection and try again'
-                    });
+                  setDebugLog(l => [...l, `[${new Date().toLocaleTimeString()}] Yearly tapped | pkg: ${yearlyPackage?.identifier ?? 'null'} | disabled: ${isButtonsDisabled}`]);
+                  if (!yearlyPackage) {
+                    setPurchaseErrorMessage('No packages available. Please check your internet connection and try again.');
                     return;
                   }
-
-                  // Find yearly package (usually $rc_annual or similar)
-                  const yearlyPackage = offerings.availablePackages.find(
-                    pkg => pkg.identifier.includes('annual') || pkg.identifier.includes('year') || pkg.identifier.includes('yearly')
-                  ) || offerings.availablePackages.find(
-                    pkg => pkg !== offerings.availablePackages[0]
-                  ) || offerings.availablePackages[0]; // Fallback
-
                   await handlePurchase(yearlyPackage, 'yearly');
                 }}
-                disabled={isProcessingPurchase || isPurchasing || !offerings}
-                activeOpacity={0.7}
+                onPressIn={() => setDebugLog(l => [...l, `[${new Date().toLocaleTimeString()}] Yearly — press IN detected`])}
+                disabled={isButtonsDisabled}
+                style={{ opacity: isButtonsDisabled ? 0.5 : 1 }}
               >
                 <Card
   className="border-2 border-primary bg-primary/5 relative"
@@ -331,7 +369,7 @@ export function UpgradeModal({
     borderRadius: 999,
   }}
 >
-    <Text className="text-xs text-on-primary font-bold">
+    <Text className="text-xs text-white font-bold">
       MOST POPULAR
     </Text>
   </View>
@@ -345,25 +383,32 @@ export function UpgradeModal({
     </View>
 
     <View className="items-end">
-      <Text className="text-sm text-muted-foreground line-through">
-        $35.88
-      </Text>
+      {fullYearlyString !== '—' && (
+        <Text className="text-sm text-muted-foreground line-through">
+          {fullYearlyString}
+        </Text>
+      )}
       <Text className="text-3xl font-extrabold text-primary">
-        $32.29
+        {yearlyPriceString}
       </Text>
-      <Text className="text-xs text-primary font-semibold">
-        $2.69 / month
-      </Text>
+      {perMonthString !== '—' && (
+        <Text className="text-xs text-primary font-semibold">
+          {perMonthString} / month
+        </Text>
+      )}
     </View>
   </View>
 
-  <Text className="text-xs text-green-600 font-semibold mt-2">
-    Save $3.59 every year 🌱
-  </Text>
+  {yearlySavingsString && (
+    <Text className="text-xs text-green-600 font-semibold mt-2">
+      Save {yearlySavingsString} every year 🌱
+    </Text>
+  )}
 </Card>
-              </TouchableOpacity>
+              </Pressable>
               </View>
             )}
+
 
             {/* Coupon Entry (Collapsed by default) */}
 <View className="mb-4">

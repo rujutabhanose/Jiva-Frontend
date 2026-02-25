@@ -14,6 +14,7 @@ import { ImagePreviewScreen } from "../screens/ImagePreviewScreen";
 import { AnalysisScreen } from "../screens/AnalysisScreen";
 import { DiagnosisScreen } from "../screens/DiagnosisScreen";
 import { PlantIdentificationScreen } from "../screens/PlantIdentificationScreen";
+import { CropScreen } from "../screens/CropScreen";
 import { ScanLimitScreen } from "../screens/ScanLimitScreen";
 import { HistoryDetailScreen } from "../screens/HistoryDetailScreen";
 import { ConditionDetailScreen } from "../screens/ConditionDetailScreen";
@@ -337,6 +338,15 @@ export function RootNavigator({
     }
   };
 
+  const handleCrop = () => {
+    setModalScreen('image-crop');
+  };
+
+  const handleCropComplete = (croppedImage: string) => {
+    setCapturedImage(croppedImage);
+    setModalScreen('image-preview');
+  };
+
   const handleAnalysisComplete = (result: PlantIdentificationResult | DiagnosisResult, scanType: 'diagnose' | 'identify') => {
     if (scanType === 'diagnose') {
       const diagnosisData = result as DiagnosisResult;
@@ -531,6 +541,15 @@ export function RootNavigator({
               setModalScreen('analysis-identify');
             }
           }}
+          onCrop={scanMode === 'identify' ? handleCrop : undefined}
+        />
+      )}
+
+      {modalScreen === 'image-crop' && capturedImage && (
+        <CropScreen
+          image={capturedImage}
+          onCrop={handleCropComplete}
+          onCancel={() => setModalScreen('image-preview')}
         />
       )}
 

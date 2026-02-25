@@ -17,15 +17,15 @@ export function ScanLimitScreen({ onBack, onUpgrade, onJoinBeta, onRestorePurcha
   const plans = [
     {
       name: 'Monthly',
-      price: '$9.99',
+      price: '$2.99',
       period: 'per month',
       recommended: false
     },
     {
       name: 'Yearly',
-      price: '$79.99',
+      price: '$17.99',
       period: 'per year',
-      savings: 'Save 33%',
+      savings: 'Save 50%',
       recommended: true
     }
   ];

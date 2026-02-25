@@ -11,6 +11,7 @@ export type AppScreen =
   | 'camera'
   | 'permissions'
   | 'image-preview'
+  | 'image-crop'
   | 'analysis-diagnose'
   | 'analysis-identify'
   | 'diagnosis'

@@ -8,6 +8,7 @@ import {
   Sparkles,
   Stethoscope,
   Image as ImageIcon,
+  Crop,
 } from 'lucide-react-native';
 
 interface ImagePreviewScreenProps {
@@ -17,6 +18,7 @@ interface ImagePreviewScreenProps {
   onBack: () => void;
   onRetake: () => void;
   onContinue: () => void;
+  onCrop?: () => void;
 }
 
 export function ImagePreviewScreen({
@@ -26,6 +28,7 @@ export function ImagePreviewScreen({
   onBack,
   onRetake,
   onContinue,
+  onCrop,
 }: ImagePreviewScreenProps) {
   const isIdentify = mode === 'identify';
   const PrimaryIcon = isIdentify ? Sparkles : Stethoscope;
@@ -69,10 +72,25 @@ export function ImagePreviewScreen({
               size="lg"
               fullWidth
               onPress={onContinue}
-              className="mb-6"
+              className="mb-4"
             >
                 Continue
             </Button>
+
+            {onCrop && (
+              <Button
+                variant="outline"
+                size="md"
+                fullWidth
+                onPress={onCrop}
+                className="mb-4"
+              >
+                <Crop size={18} color="#3F7C4C" strokeWidth={2} />
+                <Text className="text-primary font-medium">
+                  Crop Image
+                </Text>
+              </Button>
+            )}
 
             <Button
               variant="outline"

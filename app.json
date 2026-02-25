@@ -52,6 +52,11 @@
           "photosPermission": "Allow Jiva Plants to access your photos to upload plant images for analysis."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9ca719a9-b719-47e6-ae75-913c4579cfb3"
+      }
+    }
   }
 }

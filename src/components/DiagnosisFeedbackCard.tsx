@@ -179,7 +179,7 @@ export function DiagnosisFeedbackCard({
         </View>
         <View className="flex-1">
           <Text className="text-base font-semibold">
-            Is this diagnosis correct?
+            Is this helpful?
           </Text>
           <Text className="text-xs text-muted-foreground">
             Your feedback improves our accuracy

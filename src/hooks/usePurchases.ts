@@ -14,6 +14,7 @@ interface UsePurchasesReturn {
   error: string | null;
   purchasePackage: (pkg: PurchasesPackage, deviceId?: string) => Promise<{ success: boolean; message: string }>;
   restorePurchases: (deviceId?: string) => Promise<{ success: boolean; message: string }>;
+  retryFetchOfferings: () => Promise<void>;
   isPro: boolean;
 }
 
@@ -58,8 +59,8 @@ export function usePurchases(): UsePurchasesReturn {
                   identifier: 'yearly_pro',
                   description: 'Yearly Pro Subscription',
                   title: 'Yearly Pro',
-                  price: 32.29,
-                  priceString: '$32.29',
+                  price: 17.99,
+                  priceString: '$17.99',
                   currencyCode: 'USD',
                   introPrice: null,
                   discounts: null,
@@ -80,6 +81,7 @@ export function usePurchases(): UsePurchasesReturn {
         }
 
         // PRODUCTION MODE: Initialize RevenueCat normally
+        console.log('[RevenueCat] Configuring with API key:', REVENUECAT_API_KEY ? `${REVENUECAT_API_KEY.substring(0, 10)}...` : 'EMPTY/UNDEFINED');
         await Purchases.configure({ apiKey: REVENUECAT_API_KEY });
 
         // Set user ID if available (optional, for better analytics)
@@ -107,15 +109,24 @@ export function usePurchases(): UsePurchasesReturn {
       const offerings = await Purchases.getOfferings();
       if (offerings.current !== null) {
         setOfferings(offerings.current);
+        setError(null);
         console.log('[RevenueCat] Offerings loaded:', offerings.current);
       } else {
         console.warn('[RevenueCat] No current offering available');
+        setError('No subscription plans available. Please try again later.');
       }
     } catch (err: any) {
       console.error('[RevenueCat] Error fetching offerings:', err);
       setError(err.message || 'Failed to fetch offerings');
     }
   };
+
+  const retryFetchOfferings = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    await fetchOfferings();
+    setIsLoading(false);
+  }, []);
 
   const fetchCustomerInfo = async () => {
     try {
@@ -367,6 +378,7 @@ export function usePurchases(): UsePurchasesReturn {
     error,
     purchasePackage,
     restorePurchases,
+    retryFetchOfferings,
     isPro,
   };
 }
