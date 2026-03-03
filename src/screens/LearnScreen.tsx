@@ -89,7 +89,6 @@ export function LearnScreen({ onNavigate, onConditionSelect }: LearnScreenProps)
     <View className="flex-1 bg-background pb-20">
       <Header
         title="Learn"
-        showBeta
       />
 
       <ScrollView className="flex-1">

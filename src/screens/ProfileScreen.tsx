@@ -6,6 +6,13 @@ import { Header } from '../components/ui/Header';
 import { User, Mail, CreditCard, Shield, Info, LogOut, Users, Leaf } from 'lucide-react-native';
 import { Switch } from '../components/ui/switch';
 import { UserData } from '../utils/storage';
+import {
+  getWeeklyTipsEnabled,
+  setWeeklyTipsEnabled,
+  scheduleWeeklyTip,
+  cancelWeeklyTip,
+  requestNotificationPermissions,
+} from '../utils/notifications';
 
 interface ProfileScreenProps {
   isPro: boolean;
@@ -22,6 +29,33 @@ interface ProfileScreenProps {
 export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogout, onEditPreferences, onUpgrade, onCancelSubscription, onDeleteAccount }: ProfileScreenProps) {
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
   const [weeklyTips, setWeeklyTips] = React.useState(true);
+
+  // Load persisted weekly tips preference on mount
+  React.useEffect(() => {
+    getWeeklyTipsEnabled().then(setWeeklyTips);
+  }, []);
+
+  const handleWeeklyTipsToggle = async (enabled: boolean) => {
+    setWeeklyTips(enabled);
+    await setWeeklyTipsEnabled(enabled);
+
+    if (enabled) {
+      const granted = await requestNotificationPermissions();
+      if (granted) {
+        await scheduleWeeklyTip();
+      } else {
+        // Permission denied — revert toggle
+        setWeeklyTips(false);
+        await setWeeklyTipsEnabled(false);
+        Alert.alert(
+          'Permission Required',
+          'Please enable notifications in your device settings to receive weekly plant care tips.'
+        );
+      }
+    } else {
+      await cancelWeeklyTip();
+    }
+  };
 
   const handleCancelSubscription = () => {
     Alert.alert(
@@ -73,7 +107,6 @@ export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogou
     <View className="flex-1 bg-background">
       <Header
         title="Profile"
-        showBeta
       />
 
       <ScrollView 
@@ -244,7 +277,7 @@ export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogou
                 <Text className="text-sm">Weekly Tips</Text>
                 <Switch
                   value={weeklyTips}
-                  onValueChange={setWeeklyTips}
+                  onValueChange={handleWeeklyTipsToggle}
                 />
               </View>
             </Card>
@@ -258,7 +291,7 @@ export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogou
   className="bg-[#F2F6F5]"
   style={{ shadowOpacity: 0, elevation: 0 }}
 >
-              <TouchableOpacity activeOpacity={0.6} className="w-full flex flex-row items-center gap-3 p-4">
+              <TouchableOpacity activeOpacity={0.6} className="w-full flex flex-row items-center gap-3 p-4" onPress={() => onNavigate('privacy-policy')}>
                 <Shield size={20} color="#3F7C4C" strokeWidth={2} />
                 <Text className="flex-1 text-left">Privacy Policy</Text>
               </TouchableOpacity>
@@ -280,7 +313,6 @@ export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogou
               <Info size={20} color="#3F7C4C" strokeWidth={2} />
               <Text className="font-medium">About Jiva Plants</Text>
             </View>
-            <Text className="text-sm text-muted-foreground mb-2">Version 1.0.0 (Beta)</Text>
             <View className="space-y-1">
               <TouchableOpacity activeOpacity={0.6}>
                 <Text className="text-sm text-primary">Open Source Licenses</Text>
@@ -292,6 +324,22 @@ export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogou
           </Card>
         </View>
       </ScrollView>
+
+      {/* Footer */}
+      <View className="py-4 px-6 border-t border-border gap-1">
+        <Text className="text-[11px] text-muted-foreground text-center">
+          Version 1.0.0
+        </Text>
+        <Text className="text-[11px] text-muted-foreground text-center">
+          © 2026 JivaPlants. All rights reserved.
+        </Text>
+        <Text className="text-[11px] text-muted-foreground text-center">
+          JivaPlants is developed by Mahesh Athalye.
+        </Text>
+        <Text className="text-[11px] text-muted-foreground text-center">
+          Marketing and brand operations are managed by StoriesForMemories LLC.
+        </Text>
+      </View>
     </View>
   );
 }

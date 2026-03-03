@@ -87,7 +87,7 @@ export function HistoryDetailScreen({
       />
 
       <ScrollView className="flex-1">
-        <View className="max-w-lg mx-auto px-6 py-6 space-y-4">
+        <View className="max-w-lg mx-auto px-6 py-6" style={{ gap: 16 }}>
           {/* Image */}
           <Card padding="none" className="shadow-none">
   <ImageWithFallback

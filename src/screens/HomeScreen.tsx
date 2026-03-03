@@ -114,7 +114,7 @@ export function HomeScreen({
 
   return (
     <View className="flex-1 bg-background">
-      <Header title="Jiva Plants" showBeta />
+      <Header title="Jiva Plants" />
 
       <ScrollView className="flex-1">
         {/* Hero */}
@@ -160,19 +160,17 @@ export function HomeScreen({
                 <Card padding="lg" className="bg-[#F2F6F5]">
                   <View className="flex-row items-center gap-4">
                     <View className="w-16 h-16 rounded-2xl border border-border bg-white items-center justify-center">
-                      <View className="w-12 h-12 rounded-xl bg-[#F2F6F5] items-center justify-center">
-                        <Image
-                          source={require("../../assets/identify-plant.png")}
-                          style={{ width: 34, height: 34 }}
-                          resizeMode="contain"
-                        />
-                      </View>
+                      <Image
+                        source={require("../../assets/identify-plant.png")}
+                        style={{ width: 34, height: 34 }}
+                        resizeMode="contain"
+                      />
                     </View>
 
                     <View className="flex-1">
-                      <Text className="font-semibold mb-1">Identify Plant</Text>
+                      <Text className="text-base font-semibold mb-1">Identify Plant</Text>
                       <Text className="text-sm text-muted-foreground">
-                        Discover what plant you have
+                        Discover Plants
                       </Text>
                       <Text className="text-xs text-primary mt-1 font-medium">
                         Free · Unlimited
@@ -192,21 +190,19 @@ export function HomeScreen({
                 <Card padding="lg" className="bg-[#F2F6F5]">
                   <View className="flex-row items-center gap-4">
                     <View className="w-16 h-16 rounded-2xl border border-border bg-white items-center justify-center">
-                      <View className="w-12 h-12 rounded-xl bg-[#F2F6F5] items-center justify-center">
-                        <Image
-                          source={require("../../assets/diagnose-plant.png")}
-                          style={{ width: 34, height: 34 }}
-                          resizeMode="contain"
-                        />
-                      </View>
+                      <Image
+                        source={require("../../assets/diagnose-plant.png")}
+                        style={{ width: 34, height: 34 }}
+                        resizeMode="contain"
+                      />
                     </View>
 
                     <View className="flex-1">
-                      <Text className="font-semibold mb-1">
+                      <Text className="text-base font-semibold mb-1">
                         Revive Your Plant
                       </Text>
                       <Text className="text-sm text-muted-foreground">
-                        Cure and care for your plants
+                        Cure and Care
                       </Text>
                       {!isPro && (
                         <Text className="text-xs text-muted-foreground mt-1">
@@ -286,7 +282,11 @@ export function HomeScreen({
 
           {/* Tip */}
           <FadeInItem>
-            <View className="mt-8 px-2">
+            <TouchableOpacity
+              activeOpacity={0.75}
+              onPress={() => onNavigate("plant-care-tips")}
+              className="mt-8 px-2"
+            >
               <Card padding="lg" className="bg-muted">
                 <View className="flex-row gap-4">
                   <Image
@@ -295,16 +295,19 @@ export function HomeScreen({
                     resizeMode="contain"
                   />
                   <View className="flex-1">
-                    <Text className="text-sm font-semibold mb-1">
+                    <Text className="text-base font-semibold mb-1">
                       Plant Care Tip
                     </Text>
                     <Text className="text-sm text-muted-foreground">
                       {randomTip}
                     </Text>
+                    <Text className="text-xs text-primary mt-2 font-medium">
+                      Browse all tips →
+                    </Text>
                   </View>
                 </View>
               </Card>
-            </View>
+            </TouchableOpacity>
           </FadeInItem>
         </View>
       </ScrollView>

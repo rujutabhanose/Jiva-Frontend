@@ -20,9 +20,12 @@ export type AppScreen =
   | 'history-detail'
   | 'condition-detail'
   | 'learn'
+  | 'plant-care-tips'
   | 'edit-preferences'
+  | 'privacy-policy'
   | 'offline'
-  | 'error';
+  | 'error'
+  | 'upgrade';
 
 export type NavigationScreen = RootNavigationState | AuthScreen | MainTabScreen | AppScreen;
 

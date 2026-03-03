@@ -7,7 +7,7 @@ interface HeaderProps {
   title: string;
   onBack?: () => void;
   showBack?: boolean;
-  showBeta?: boolean;
+
   rightAction?: React.ReactNode;
 }
 
@@ -15,7 +15,7 @@ export function Header({
   title,
   onBack,
   showBack,
-  showBeta,
+
   rightAction,
 }: HeaderProps) {
   return (
@@ -71,27 +71,6 @@ export function Header({
             {title}
           </Text>
 
-          {showBeta && (
-            <View
-              style={{
-                marginTop: 4,
-                backgroundColor: "#C8E6C9",
-                paddingHorizontal: 12,
-                paddingVertical: 4,
-                borderRadius: 999,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 11,
-                  fontWeight: "600",
-                  color: "#2E7D32",
-                }}
-              >
-                BETA
-              </Text>
-            </View>
-          )}
         </View>
 
         {/* RIGHT */}

@@ -51,6 +51,14 @@
         {
           "photosPermission": "Allow Jiva Plants to access your photos to upload plant images for analysis."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#3F7C4C",
+          "sounds": []
+        }
       ]
     ],
     "extra": {

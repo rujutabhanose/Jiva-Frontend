@@ -29,7 +29,6 @@ export function UpgradeModal({
   scansUsed,
   scansLimit
 }: UpgradeModalProps) {
-  console.log('[UpgradeModal] Component rendering with deviceId prop:', deviceId);
   const { offerings, purchasePackage, isLoading: isPurchasing, error: purchaseError, retryFetchOfferings } = usePurchases();
   const [couponCode, setCouponCode] = useState('');
   const [isRedeeming, setIsRedeeming] = useState(false);
@@ -38,7 +37,6 @@ export function UpgradeModal({
   const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
   const [showCoupon, setShowCoupon] = useState(false);
   const [purchaseErrorMessage, setPurchaseErrorMessage] = useState<string | null>(null);
-  const [debugLog, setDebugLog] = useState<string[]>([]);
 
   // Derive packages from offerings once, reuse in both the press handlers and the price display
   const monthlyPackage = offerings?.availablePackages.find(
@@ -66,13 +64,10 @@ export function UpgradeModal({
   const yearlySavingsString = monthlyPriceNum > 0 && yearlyPriceNum > 0 ? fmt(monthlyPriceNum * 12 - yearlyPriceNum) : null;
 
   const handlePurchase = async (pkg: PurchasesPackage, planType: 'monthly' | 'yearly') => {
-    setDebugLog(l => [...l, `handlePurchase: ${pkg.identifier}`]);
     setPurchaseErrorMessage(null);
     setIsProcessingPurchase(true);
     try {
-      setDebugLog(l => [...l, 'calling purchasePackage...']);
       const result = await purchasePackage(pkg, deviceId);
-      setDebugLog(l => [...l, `result: success=${result.success} msg=${result.message}`]);
 
       if (result.success) {
         onSelectPlan(planType);
@@ -114,25 +109,23 @@ export function UpgradeModal({
       const result = await onRedeemCoupon(couponCode.trim());
       if (result.success) {
         setCouponSuccess(result.message);
-        Toast.show({ 
-          type: 'success', 
+        Toast.show({
+          type: 'success',
           text1: 'Coupon Redeemed!',
           text2: result.message
         });
-        
-        // Call onUpgradeSuccess if provided
+
         if (onUpgradeSuccess) {
           onUpgradeSuccess();
         }
-        
-        // Close modal after short delay
+
         setTimeout(() => {
           onClose();
         }, 2000);
       } else {
         setCouponError(result.message);
-        Toast.show({ 
-          type: 'error', 
+        Toast.show({
+          type: 'error',
           text1: 'Coupon Invalid',
           text2: result.message
         });
@@ -140,8 +133,8 @@ export function UpgradeModal({
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to redeem coupon';
       setCouponError(errorMessage);
-      Toast.show({ 
-        type: 'error', 
+      Toast.show({
+        type: 'error',
         text1: 'Error',
         text2: errorMessage
       });
@@ -160,350 +153,265 @@ export function UpgradeModal({
       <SafeAreaView style={{ flex: 1 }}>
         <View className="flex-1 bg-black/60 justify-center items-center p-6">
           <Card
-  className="w-full max-w-md bg-[#F2F6F5]"
-  style={{
-    maxHeight: '90%', // ✅ Android needs this
-  }}
->
-  {/* ── Always-visible diagnostic banner (above ScrollView, never scrolls away) ── */}
-  {(purchaseErrorMessage || (offerings && !monthlyPackage && !yearlyPackage) || (!offerings && !isPurchasing && !purchaseError)) && (
-    <View style={{ backgroundColor: '#FEE2E2', borderColor: '#FCA5A5', borderWidth: 1, borderRadius: 10, margin: 12, padding: 12 }}>
-      <Text style={{ color: '#B91C1C', fontSize: 13, textAlign: 'center', fontWeight: '600' }}>
-        {purchaseErrorMessage
-          ?? (offerings && !monthlyPackage && !yearlyPackage
-            ? 'Products unavailable: offerings loaded but no packages returned from App Store. Check App Store Connect product status (currently READY_TO_SUBMIT).'
-            : 'Could not load plans — offerings returned empty. Check RevenueCat dashboard.')}
-      </Text>
-    </View>
-  )}
-  {/* ── Always-visible state — shows without any tap ── */}
-  <View style={{ backgroundColor: '#EFF6FF', borderColor: '#93C5FD', borderWidth: 1, borderRadius: 10, margin: 12, marginTop: 0, padding: 10 }}>
-    <Text style={{ color: '#1D4ED8', fontSize: 11, fontWeight: 'bold', marginBottom: 2 }}>DEBUG STATE</Text>
-    <Text style={{ color: '#1D4ED8', fontSize: 11 }}>disabled: {String(isButtonsDisabled)}</Text>
-    <Text style={{ color: '#1D4ED8', fontSize: 11 }}>isPurchasing: {String(isPurchasing)}</Text>
-    <Text style={{ color: '#1D4ED8', fontSize: 11 }}>isProcessing: {String(isProcessingPurchase)}</Text>
-    <Text style={{ color: '#1D4ED8', fontSize: 11 }}>offerings: {offerings ? 'loaded' : 'null'}</Text>
-    <Text style={{ color: '#1D4ED8', fontSize: 11 }}>monthlyPkg: {monthlyPackage?.identifier ?? 'null'}</Text>
-    <Text style={{ color: '#1D4ED8', fontSize: 11 }}>yearlyPkg: {yearlyPackage?.identifier ?? 'null'}</Text>
-    <Text style={{ color: '#1D4ED8', fontSize: 11 }}>purchaseError: {purchaseError ?? 'null'}</Text>
-    {debugLog.map((line, i) => (
-      <Text key={i} style={{ color: '#1E40AF', fontSize: 11, marginTop: 2 }}>{line}</Text>
-    ))}
-  </View>
-  {isProcessingPurchase && (
-    <View style={{ alignItems: 'center', paddingVertical: 8 }}>
-      <ActivityIndicator size="small" color="#3F7C4C" />
-      <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Processing...</Text>
-    </View>
-  )}
-
-  <ScrollView
-    showsVerticalScrollIndicator={false}
-    contentContainerStyle={{ paddingBottom: 24 }}
-  >
-            {/* Header */}
-            <View className="flex-row items-start justify-between mb-4">
-  <View className="flex-1 pr-4">
-    <Text className="text-2xl font-extrabold mb-1">
-      Diagnose plants instantly 🌱
-    </Text>
-    <Text className="text-sm text-muted-foreground">
-      Stop guessing. Get accurate disease detection & treatment plans.
-    </Text>
-    <Text className="text-xs text-muted-foreground mt-2">
-      You've used {scansUsed} of {scansLimit} free scans
-    </Text>
-  </View>
-
-  <TouchableOpacity onPress={onClose} hitSlop={10}>
-    <X size={22} color="#6B7280" />
-  </TouchableOpacity>
-</View>
-
-            {/* Free Plan Exhausted */}
-            <Card
-  className="bg-warning/10 border-warning/30 mb-6"
-  style={{ shadowOpacity: 0, elevation: 0 }}
->
-              <View className="flex items-start gap-3">
-                <View className="w-10 h-10 bg-warning/15 rounded-xl flex items-center justify-center">
-  <Zap size={18} color="#D08A4E" strokeWidth={2} />
-</View>
-                <View className="flex-1">
-                  <Text className="text-sm font-semibold mb-1">
-  You’ve reached your free scan limit
-</Text>
-<Text className="text-xs text-muted-foreground">
-  Your plant may worsen without timely diagnosis.
-</Text>
-                  <Text className="text-xs text-muted-foreground">
-                    Upgrade to continue scanning and unlock premium features
-                  </Text>
-                </View>
-              </View>
-            </Card>
-
-            {/* Pro Features */}
-            {/* Pro Features */}
-<View className="mb-6">
-  <Text className="text-lg font-semibold mb-4">What you’ll unlock</Text>
-
-  <View className="space-y-3">
-    {[
-      'Unlimited plant diagnosis scans',
-      'Advanced disease diagnosis',
-      'Detailed treatment plans',
-      'Plant health history tracking',
-      'Priority support',
-    ].map((feature, idx) => (
-      <View
-        key={idx}
-        className="flex-row items-center gap-3"
-      >
-        <View className="w-6 h-6 rounded-full bg-primary/10 items-center justify-center">
-          <Check size={14} color="#3F7C4C" strokeWidth={3} />
-        </View>
-        <Text className="text-sm text-foreground flex-1">
-          {feature}
-        </Text>
-      </View>
-    ))}
-  </View>
-</View>
-
-            {/* Upgrade Options Header */}
-            <View className="mb-4">
-              <Text className="text-lg font-semibold mb-2">Choose Your Upgrade Option</Text>
-              <Text className="text-sm text-muted-foreground">
-                Select a subscription plan or use a coupon code below
-              </Text>
-            </View>
-            <Text className="text-xs text-muted-foreground text-center mb-3">
-  Plant Lovers' Heaven 🌿
-</Text>
-
-            {/* Pricing Plans */}
-            {isPurchasing && !offerings ? (
-              <View className="py-8 items-center">
-                <ActivityIndicator size="large" color="#3F7C4C" />
-                <Text className="text-sm text-muted-foreground mt-4">Loading pricing plans...</Text>
-              </View>
-            ) : !offerings && purchaseError ? (
-              <View className="py-8 items-center gap-3">
-                <AlertCircle size={32} color="#D08A4E" />
-                <Text className="text-sm text-muted-foreground text-center">
-                  Could not load subscription plans. Please check your connection and try again.
+            className="w-full max-w-md bg-[#F2F6F5]"
+            style={{ maxHeight: '90%' }}
+          >
+            {purchaseErrorMessage && (
+              <View style={{ backgroundColor: '#FEE2E2', borderColor: '#FCA5A5', borderWidth: 1, borderRadius: 10, margin: 12, padding: 12 }}>
+                <Text style={{ color: '#B91C1C', fontSize: 13, textAlign: 'center', fontWeight: '600' }}>
+                  {purchaseErrorMessage}
                 </Text>
-                <TouchableOpacity
-                  onPress={retryFetchOfferings}
-                  className="mt-2 px-6 py-3 bg-primary rounded-xl"
-                  activeOpacity={0.8}
-                >
-                  <Text className="text-white font-semibold text-sm">Retry</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View className="space-y-4 mb-6">
-                {/* Monthly Plan */}
-                <Pressable
-                  onPress={async () => {
-                    setDebugLog(l => [...l, `[${new Date().toLocaleTimeString()}] Monthly tapped | pkg: ${monthlyPackage?.identifier ?? 'null'} | disabled: ${isButtonsDisabled}`]);
-                    if (!monthlyPackage) {
-                      setPurchaseErrorMessage('No packages available. Please check your internet connection and try again.');
-                      return;
-                    }
-                    await handlePurchase(monthlyPackage, 'monthly');
-                  }}
-                  onPressIn={() => setDebugLog(l => [...l, `[${new Date().toLocaleTimeString()}] Monthly — press IN detected`])}
-                  disabled={isButtonsDisabled}
-                  style={{ opacity: isButtonsDisabled ? 0.5 : 1 }}
-                >
-                <Card
-  className="border-2 border-border bg-[#F2F6F5]"
-  style={{ shadowOpacity: 0, elevation: 0 }}
->
-                <View className="flex-row items-center justify-between">
-    <View className="flex-1">
-      <Text className="text-lg font-bold mb-1">Monthly</Text>
-      <Text className="text-sm text-muted-foreground">Billed monthly</Text>
-    </View>
-    <View className="items-end justify-center">
-      <Text className="text-2xl font-bold">{monthlyPriceString}</Text>
-      <Text className="text-xs text-muted-foreground">/month</Text>
-    </View>
-  </View>
-</Card>
-
-              </Pressable>
-
-              {/* Spacer between plans */}
-              <View className="h-4" />
-
-              {/* Yearly Plan (Popular) */}
-              <Pressable
-                onPress={async () => {
-                  setDebugLog(l => [...l, `[${new Date().toLocaleTimeString()}] Yearly tapped | pkg: ${yearlyPackage?.identifier ?? 'null'} | disabled: ${isButtonsDisabled}`]);
-                  if (!yearlyPackage) {
-                    setPurchaseErrorMessage('No packages available. Please check your internet connection and try again.');
-                    return;
-                  }
-                  await handlePurchase(yearlyPackage, 'yearly');
-                }}
-                onPressIn={() => setDebugLog(l => [...l, `[${new Date().toLocaleTimeString()}] Yearly — press IN detected`])}
-                disabled={isButtonsDisabled}
-                style={{ opacity: isButtonsDisabled ? 0.5 : 1 }}
-              >
-                <Card
-  className="border-2 border-primary bg-primary/5 relative"
-  style={{ shadowOpacity: 0, elevation: 0 }}
->
-  {/* MOST POPULAR badge */}
-  <View
-  style={{
-    position: 'absolute',
-    top: -12,
-    left: 16,
-    backgroundColor: '#3F7C4C',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  }}
->
-    <Text className="text-xs text-white font-bold">
-      MOST POPULAR
-    </Text>
-  </View>
-
-  <View className="flex-row items-center justify-between">
-    <View className="flex-1">
-      <Text className="text-lg font-extrabold mb-1">Yearly</Text>
-      <Text className="text-sm text-muted-foreground">
-        Best value • Billed annually
-      </Text>
-    </View>
-
-    <View className="items-end">
-      {fullYearlyString !== '—' && (
-        <Text className="text-sm text-muted-foreground line-through">
-          {fullYearlyString}
-        </Text>
-      )}
-      <Text className="text-3xl font-extrabold text-primary">
-        {yearlyPriceString}
-      </Text>
-      {perMonthString !== '—' && (
-        <Text className="text-xs text-primary font-semibold">
-          {perMonthString} / month
-        </Text>
-      )}
-    </View>
-  </View>
-
-  {yearlySavingsString && (
-    <Text className="text-xs text-green-600 font-semibold mt-2">
-      Save {yearlySavingsString} every year 🌱
-    </Text>
-  )}
-</Card>
-              </Pressable>
               </View>
             )}
 
-
-            {/* Coupon Entry (Collapsed by default) */}
-<View className="mb-4">
-  {!showCoupon ? (
-    <TouchableOpacity
-      onPress={() => setShowCoupon(true)}
-      activeOpacity={0.7}
-    >
-      <View className="flex-row items-center justify-center gap-2 py-2 opacity-80">
-        <Tag size={16} color="#3F7C4C" />
-        <Text className="text-sm text-primary font-semibold underline">
-          Have a coupon code?
-        </Text>
-      </View>
-    </TouchableOpacity>
-  ) : (
-    <Card
-  className="border border-border bg-[#F2F6F5]"
-  style={{ shadowOpacity: 0, elevation: 0 }}
->
-      <Text className="text-sm font-semibold mb-3">Apply Coupon</Text>
-
-      <View className="flex-row gap-4">
-        <TextInput
-          className="flex-1 border border-border rounded-lg px-4 py-3 text-base bg-background"
-          placeholder="ENTER CODE"
-          value={couponCode}
-          onChangeText={(text) => {
-            setCouponCode(text.toUpperCase());
-            setCouponError('');
-            setCouponSuccess('');
-          }}
-          autoCapitalize="characters"
-          editable={!isRedeeming}
-        />
-
-        <Button
-          size="md"
-          onPress={handleRedeemCoupon}
-          disabled={isRedeeming || !couponCode.trim()}
-        >
-          {isRedeeming ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text className="text-on-primary font-semibold">Apply</Text>
-          )}
-        </Button>
-      </View>
-
-      {couponError && (
-        <Text className="text-xs text-destructive mt-2 text-center">
-          {couponError}
-        </Text>
-      )}
-
-      {couponSuccess && (
-        <Text className="text-xs text-primary mt-2 text-center">
-          {couponSuccess}
-        </Text>
-      )}
-    </Card>
-  )}
-</View>
-
-            {/* Payment Methods */}
-            <View className="py-4 border-t border-border">
-              <Text className="text-xs text-muted-foreground text-center mb-2">
-                Payment methods accepted:
-              </Text>
-              <View className="flex-row justify-center items-center gap-4">
-                <Text className="text-xs text-muted-foreground">Google Pay</Text>
-                <Text className="text-xs text-muted-foreground">•</Text>
-                <Text className="text-xs text-muted-foreground">Stripe</Text>
-                <Text className="text-xs text-muted-foreground">•</Text>
-                <Text className="text-xs text-muted-foreground">Credit Card</Text>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 24 }}
+            >
+              {/* Header */}
+              <View className="flex-row items-start justify-between mb-4">
+                <View className="flex-1 pr-4">
+                  <Text className="text-2xl font-extrabold mb-1">
+                    Diagnose plants instantly 🌱
+                  </Text>
+                  <Text className="text-sm text-muted-foreground">
+                    Stop guessing. Get accurate disease detection & treatment plans.
+                  </Text>
+                  <Text className="text-xs text-muted-foreground mt-2">
+                    You've used {scansUsed} of {scansLimit} free scans
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={onClose} hitSlop={10}>
+                  <X size={22} color="#6B7280" />
+                </TouchableOpacity>
               </View>
-            </View>
 
-            {/* Trust Badges */}
-            <View className="flex items-center gap-3 py-4 border-t border-border">
-              <Shield size={16} color="#3F7C4C" strokeWidth={2} />
-              <Text className="text-xs text-muted-foreground text-center">
-                Secure payment • Cancel anytime
-              </Text>
-            </View>
+              {/* Free Plan Exhausted */}
+              <Card
+                className="bg-warning/10 border-warning/30 mb-6"
+                style={{ shadowOpacity: 0, elevation: 0 }}
+              >
+                <View className="flex items-start gap-3">
+                  <View className="w-10 h-10 bg-warning/15 rounded-xl flex items-center justify-center">
+                    <Zap size={18} color="#D08A4E" strokeWidth={2} />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm font-semibold mb-1">
+                      You've reached your free scan limit
+                    </Text>
+                    <Text className="text-xs text-muted-foreground">
+                      Your plant may worsen without timely diagnosis.
+                    </Text>
+                    <Text className="text-xs text-muted-foreground">
+                      Upgrade to continue scanning and unlock premium features
+                    </Text>
+                  </View>
+                </View>
+              </Card>
 
-            {/* Close Link */}
-            <TouchableOpacity onPress={onClose} activeOpacity={0.7}>
-              <Text className="text-sm text-muted-foreground text-center underline">
-                Continue with limited access
+              {/* Pro Features */}
+              <View className="mb-6">
+                <Text className="text-lg font-semibold mb-4">What you'll unlock</Text>
+                <View className="space-y-3">
+                  {[
+                    'Unlimited plant diagnosis scans',
+                    'Advanced disease diagnosis',
+                    'Detailed treatment plans',
+                    'Plant health history tracking',
+                    'Priority support',
+                  ].map((feature, idx) => (
+                    <View key={idx} className="flex-row items-center gap-3">
+                      <View className="w-6 h-6 rounded-full bg-primary/10 items-center justify-center">
+                        <Check size={14} color="#3F7C4C" strokeWidth={3} />
+                      </View>
+                      <Text className="text-sm text-foreground flex-1">{feature}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* Upgrade Options Header */}
+              <View className="mb-4">
+                <Text className="text-lg font-semibold mb-2">Choose Your Upgrade Option</Text>
+                <Text className="text-sm text-muted-foreground">
+                  Select a subscription plan or use a coupon code below
+                </Text>
+              </View>
+              <Text className="text-xs text-muted-foreground text-center mb-3">
+                Plant Lovers' Heaven 🌿
               </Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </Card>
-      </View>
+
+              {/* Pricing Plans */}
+              {isPurchasing && !offerings ? (
+                <View className="py-8 items-center">
+                  <ActivityIndicator size="large" color="#3F7C4C" />
+                  <Text className="text-sm text-muted-foreground mt-4">Loading pricing plans...</Text>
+                </View>
+              ) : !offerings && purchaseError ? (
+                <View className="py-8 items-center gap-3">
+                  <AlertCircle size={32} color="#D08A4E" />
+                  <Text className="text-sm text-muted-foreground text-center">
+                    Could not load subscription plans. Please check your connection and try again.
+                  </Text>
+                  <TouchableOpacity
+                    onPress={retryFetchOfferings}
+                    className="mt-2 px-6 py-3 bg-primary rounded-xl"
+                    activeOpacity={0.8}
+                  >
+                    <Text className="text-white font-semibold text-sm">Retry</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View className="space-y-4 mb-6">
+                  {/* Monthly Plan */}
+                  <Pressable
+                    onPress={async () => {
+                      if (!monthlyPackage) {
+                        setPurchaseErrorMessage('No packages available. Please check your internet connection and try again.');
+                        return;
+                      }
+                      await handlePurchase(monthlyPackage, 'monthly');
+                    }}
+                    disabled={isButtonsDisabled}
+                    style={{ opacity: isButtonsDisabled ? 0.5 : 1 }}
+                  >
+                    <Card className="border-2 border-border bg-[#F2F6F5]" style={{ shadowOpacity: 0, elevation: 0 }}>
+                      <View className="flex-row items-center justify-between">
+                        <View className="flex-1">
+                          <Text className="text-lg font-bold mb-1">Monthly</Text>
+                          <Text className="text-sm text-muted-foreground">Billed monthly</Text>
+                        </View>
+                        <View className="items-end justify-center">
+                          <Text className="text-2xl font-bold">{monthlyPriceString}</Text>
+                          <Text className="text-xs text-muted-foreground">/month</Text>
+                        </View>
+                      </View>
+                    </Card>
+                  </Pressable>
+
+                  <View className="h-4" />
+
+                  {/* Yearly Plan (Popular) */}
+                  <Pressable
+                    onPress={async () => {
+                      if (!yearlyPackage) {
+                        setPurchaseErrorMessage('No packages available. Please check your internet connection and try again.');
+                        return;
+                      }
+                      await handlePurchase(yearlyPackage, 'yearly');
+                    }}
+                    disabled={isButtonsDisabled}
+                    style={{ opacity: isButtonsDisabled ? 0.5 : 1 }}
+                  >
+                    <Card className="border-2 border-primary bg-primary/5 relative" style={{ shadowOpacity: 0, elevation: 0 }}>
+                      <View style={{ position: 'absolute', top: -12, left: 16, backgroundColor: '#3F7C4C', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }}>
+                        <Text className="text-xs text-white font-bold">MOST POPULAR</Text>
+                      </View>
+                      <View className="flex-row items-center justify-between">
+                        <View className="flex-1">
+                          <Text className="text-lg font-extrabold mb-1">Yearly</Text>
+                          <Text className="text-sm text-muted-foreground">Best value • Billed annually</Text>
+                        </View>
+                        <View className="items-end">
+                          {fullYearlyString !== '—' && (
+                            <Text className="text-sm text-muted-foreground line-through">{fullYearlyString}</Text>
+                          )}
+                          <Text className="text-3xl font-extrabold text-primary">{yearlyPriceString}</Text>
+                          {perMonthString !== '—' && (
+                            <Text className="text-xs text-primary font-semibold">{perMonthString} / month</Text>
+                          )}
+                        </View>
+                      </View>
+                      {yearlySavingsString && (
+                        <Text className="text-xs text-green-600 font-semibold mt-2">
+                          Save {yearlySavingsString} every year 🌱
+                        </Text>
+                      )}
+                    </Card>
+                  </Pressable>
+                </View>
+              )}
+
+              {/* Coupon Entry (Collapsed by default) */}
+              <View className="mb-4">
+                {!showCoupon ? (
+                  <TouchableOpacity onPress={() => setShowCoupon(true)} activeOpacity={0.7}>
+                    <View className="flex-row items-center justify-center gap-2 py-2 opacity-80">
+                      <Tag size={16} color="#3F7C4C" />
+                      <Text className="text-sm text-primary font-semibold underline">
+                        Have a coupon code?
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ) : (
+                  <Card className="border border-border bg-[#F2F6F5]" style={{ shadowOpacity: 0, elevation: 0 }}>
+                    <Text className="text-sm font-semibold mb-3">Apply Coupon</Text>
+                    <View className="flex-row gap-4">
+                      <TextInput
+                        className="flex-1 border border-border rounded-lg px-4 py-3 text-base bg-background"
+                        placeholder="ENTER CODE"
+                        value={couponCode}
+                        onChangeText={(text) => {
+                          setCouponCode(text.toUpperCase());
+                          setCouponError('');
+                          setCouponSuccess('');
+                        }}
+                        autoCapitalize="characters"
+                        editable={!isRedeeming}
+                      />
+                      <Button
+                        size="md"
+                        onPress={handleRedeemCoupon}
+                        disabled={isRedeeming || !couponCode.trim()}
+                      >
+                        {isRedeeming ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <Text className="text-on-primary font-semibold">Apply</Text>
+                        )}
+                      </Button>
+                    </View>
+                    {couponError && (
+                      <Text className="text-xs text-destructive mt-2 text-center">{couponError}</Text>
+                    )}
+                    {couponSuccess && (
+                      <Text className="text-xs text-primary mt-2 text-center">{couponSuccess}</Text>
+                    )}
+                  </Card>
+                )}
+              </View>
+
+              {/* Payment Methods */}
+              <View className="py-4 border-t border-border">
+                <Text className="text-xs text-muted-foreground text-center mb-2">
+                  Payment methods accepted:
+                </Text>
+                <View className="flex-row justify-center items-center gap-4">
+                  <Text className="text-xs text-muted-foreground">Google Pay</Text>
+                  <Text className="text-xs text-muted-foreground">•</Text>
+                  <Text className="text-xs text-muted-foreground">Stripe</Text>
+                  <Text className="text-xs text-muted-foreground">•</Text>
+                  <Text className="text-xs text-muted-foreground">Credit Card</Text>
+                </View>
+              </View>
+
+              {/* Trust Badges */}
+              <View className="flex items-center gap-3 py-4 border-t border-border">
+                <Shield size={16} color="#3F7C4C" strokeWidth={2} />
+                <Text className="text-xs text-muted-foreground text-center">
+                  Secure payment • Cancel anytime
+                </Text>
+              </View>
+
+              {/* Close Link */}
+              <TouchableOpacity onPress={onClose} activeOpacity={0.7}>
+                <Text className="text-sm text-muted-foreground text-center underline">
+                  Continue with limited access
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </Card>
+        </View>
       </SafeAreaView>
     </Modal>
   );

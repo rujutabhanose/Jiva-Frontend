@@ -9,11 +9,10 @@ import { Lock, Check, Sparkles, Users, Zap } from 'lucide-react-native';
 interface ScanLimitScreenProps {
   onBack: () => void;
   onUpgrade: () => void;
-  onJoinBeta: () => void;
   onRestorePurchase?: () => void;
 }
 
-export function ScanLimitScreen({ onBack, onUpgrade, onJoinBeta, onRestorePurchase }: ScanLimitScreenProps) {
+export function ScanLimitScreen({ onBack, onUpgrade, onRestorePurchase }: ScanLimitScreenProps) {
   const plans = [
     {
       name: 'Monthly',
@@ -118,15 +117,6 @@ export function ScanLimitScreen({ onBack, onUpgrade, onJoinBeta, onRestorePurcha
               <Text className="text-on-primary font-medium">Upgrade to Jiva Plants Pro</Text>
             </Button>
 
-            <Button
-              variant="outline"
-              size="md"
-              fullWidth
-              onPress={onJoinBeta}
-            >
-              <Text className="text-primary font-medium">Join Beta List (Free Upgrade)</Text>
-            </Button>
-
             <TouchableOpacity onPress={onRestorePurchase} className="w-full py-2">
               <Text className="text-sm text-muted-foreground text-center">
                 Restore Purchase
@@ -134,12 +124,6 @@ export function ScanLimitScreen({ onBack, onUpgrade, onJoinBeta, onRestorePurcha
             </TouchableOpacity>
           </View>
 
-          {/* Beta Note */}
-          <Card className="bg-accent/10 border-accent/30">
-            <Text className="text-sm text-center">
-              💡 Nurseries & agricultural professionals can join our beta program for free unlimited scans
-            </Text>
-          </Card>
         </View>
       </ScrollView>
     </View>

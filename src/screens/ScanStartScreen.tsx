@@ -77,7 +77,7 @@ export function ScanStartScreen({
 
   return (
     <View className="flex-1 bg-background">
-      <Header title={isIdentifyMode ? "Identify Plant" : "Diagnose Plant"} showBeta showBack onBack={onBack} />
+      <Header title={isIdentifyMode ? "Identify Plant" : "Diagnose Plant"} showBack onBack={onBack} />
 
       <ScrollView className="flex-1 px-6 py-6">
         {/* Intro */}

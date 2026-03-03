@@ -19,6 +19,8 @@ import { ScanLimitScreen } from "../screens/ScanLimitScreen";
 import { HistoryDetailScreen } from "../screens/HistoryDetailScreen";
 import { ConditionDetailScreen } from "../screens/ConditionDetailScreen";
 import { LearnScreen } from "../screens/LearnScreen";
+import { PlantCareTipsScreen } from "../screens/PlantCareTipsScreen";
+import { PrivacyPolicyScreen } from "../screens/PrivacyPolicyScreen";
 import { OfflineScreen } from "../screens/OfflineScreen";
 import { ErrorScreen } from "../screens/ErrorScreen";
 import { UpgradeModal } from "../components/UpgradeModal";
@@ -731,7 +733,15 @@ export function RootNavigator({
         />
       )}
 
-      {modalScreen === 'edit-preferences' && (
+      {modalScreen === 'plant-care-tips' && (
+        <PlantCareTipsScreen onBack={handleBackToMain} />
+      )}
+
+      {modalScreen === 'privacy-policy' && (
+        <PrivacyPolicyScreen onBack={handleBackToMain} />
+      )}
+
+{modalScreen === 'edit-preferences' && (
         <OnboardingScreen
           userName={userData?.name}
           initialUserType={userData?.userType}

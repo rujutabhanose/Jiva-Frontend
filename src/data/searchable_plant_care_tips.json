@@ -1,0 +1,564 @@
+{
+  "tips": [
+    {
+      "id": "1",
+      "title": "Check soil moisture before every watering",
+      "body": "Push your finger an inch into the soil; if it feels damp, wait to water so roots can breathe. Most houseplants are harmed more by overwatering than by occasional dryness.",
+      "category": "Watering",
+      "tags": ["watering", "soil", "indoor", "overwatering"]
+    },
+    {
+      "id": "2",
+      "title": "Water deeply instead of frequent sips",
+      "body": "Water until excess drains from the pot’s holes so the entire root ball is soaked. Then wait for the top layer of soil to dry before watering again to prevent root rot.",
+      "category": "Watering",
+      "tags": ["watering", "roots", "containers"]
+    },
+    {
+      "id": "3",
+      "title": "Use room temperature water for plants",
+      "body": "Let tap water sit for a few hours so it reaches room temperature and some chlorine can dissipate. Sudden cold or hot water shocks tender roots, especially on tropical houseplants.",
+      "category": "Watering",
+      "tags": ["watering", "temperature", "indoor"]
+    },
+    {
+      "id": "4",
+      "title": "Adjust watering frequency with the seasons",
+      "body": "Water less in cooler, darker months when growth slows and soil dries more slowly. In warm, bright seasons, check moisture more often, especially for small pots and hanging baskets.",
+      "category": "Watering",
+      "tags": ["watering", "seasons", "indoor"]
+    },
+    {
+      "id": "5",
+      "title": "Let succulents dry completely between waterings",
+      "body": "Wait until succulent soil is bone dry and the pot feels very light before watering again. Overly frequent watering causes mushy leaves and root rot in desert-adapted plants.",
+      "category": "Watering",
+      "tags": ["succulents", "watering", "indoor"]
+    },
+    {
+      "id": "6",
+      "title": "Empty saucers after watering potted plants",
+      "body": "After watering, wait 15–30 minutes, then pour off any water collected in the saucer. Constantly wet roots sit in stagnant water and quickly develop rot and fungus gnats.",
+      "category": "Watering",
+      "tags": ["watering", "drainage", "indoor"]
+    },
+    {
+      "id": "7",
+      "title": "Use pot weight to judge soil moisture",
+      "body": "Lift the pot right after watering to learn how heavy fully moist soil feels. Check again before each watering; a very light pot usually means the soil is dry through the root zone.",
+      "category": "Watering",
+      "tags": ["watering", "indoor", "monitoring"]
+    },
+    {
+      "id": "8",
+      "title": "Water outdoor beds early in the morning",
+      "body": "Water vegetable and flower beds just after sunrise so foliage dries quickly. This reduces fungal diseases and lets plants drink before midday heat increases evaporation.",
+      "category": "Watering",
+      "tags": ["watering", "outdoor", "vegetables"]
+    },
+    {
+      "id": "9",
+      "title": "Avoid overhead watering mildew-prone plants",
+      "body": "For roses, squash, and other mildew-prone plants, aim water at the soil level instead of soaking leaves. Wet foliage at night creates perfect conditions for fungal spots and powdery mildew.",
+      "category": "Watering",
+      "tags": ["watering", "pests", "outdoor"]
+    },
+    {
+      "id": "10",
+      "title": "Rotate pots for even light exposure",
+      "body": "Turn indoor pots a quarter turn every one to two weeks so all sides face the light over time. This prevents lopsided growth and helps stems stay straight instead of leaning toward windows.",
+      "category": "Light",
+      "tags": ["light", "indoor", "growth"]
+    },
+    {
+      "id": "11",
+      "title": "Match each plant to its light level",
+      "body": "Place low-light plants like snake plants away from bright windows, and sun-loving succulents or herbs in the brightest spots. Observe leaves for signs like stretching or scorching and adjust placement gradually.",
+      "category": "Light",
+      "tags": ["light", "placement", "succulents"]
+    },
+    {
+      "id": "12",
+      "title": "Use sheer curtains for bright indirect light",
+      "body": "Hang sheer curtains on harsh south or west windows to soften direct sun for most houseplants. This protects foliage from burn while still providing enough brightness for healthy growth.",
+      "category": "Light",
+      "tags": ["light", "indoor", "windows"]
+    },
+    {
+      "id": "13",
+      "title": "Provide grow lights for indoor herbs",
+      "body": "Position LED grow lights 15–30 centimeters above herbs and run them 12–14 hours daily. Keep the lights on a timer so plants get consistent “daylength” even in winter.",
+      "category": "Light",
+      "tags": ["light", "herbs", "indoor"]
+    },
+    {
+      "id": "14",
+      "title": "Acclimate plants when moving into full sun",
+      "body": "Transition shade-grown plants outdoors by giving them a few hours of morning sun each day for a week. Sudden full midday sun can bleach or burn leaves that developed in low light.",
+      "category": "Light",
+      "tags": ["light", "outdoor", "acclimation"]
+    },
+    {
+      "id": "15",
+      "title": "Watch leaf color as a light indicator",
+      "body": "Leggy stems and pale leaves often mean the plant needs more light. Crispy edges or bleached patches suggest too much direct sun, so move the plant slightly farther from the window.",
+      "category": "Light",
+      "tags": ["light", "diagnosis", "indoor"]
+    },
+    {
+      "id": "16",
+      "title": "Never use garden soil in containers",
+      "body": "Garden soil compacts in pots, squeezing out air pockets and drowning roots. Use a manufactured potting mix instead, which stays airy and drains well in closed containers.",
+      "category": "Soil",
+      "tags": ["soil", "potting mix", "containers"]
+    },
+    {
+      "id": "17",
+      "title": "Choose special mix for succulents and cacti",
+      "body": "Use a gritty cactus mix that contains sand, perlite, or pumice for succulents. This lets water drain quickly and mimics the fast-drying soils of their native habitats.",
+      "category": "Soil",
+      "tags": ["soil", "succulents", "drainage"]
+    },
+    {
+      "id": "18",
+      "title": "Refresh top layer of potting mix yearly",
+      "body": "Once a year, scrape off the top two to three centimeters of tired soil and replace it with fresh mix or compost. This removes built-up fertilizer salts and gives roots new nutrients.",
+      "category": "Soil",
+      "tags": ["soil", "maintenance", "indoor"]
+    },
+    {
+      "id": "19",
+      "title": "Improve vegetable beds with compost annually",
+      "body": "Work a few centimeters of finished compost into vegetable beds each season before planting. This boosts soil structure, adds nutrients, and increases water-holding capacity for roots.",
+      "category": "Soil",
+      "tags": ["soil", "vegetables", "compost"]
+    },
+    {
+      "id": "20",
+      "title": "Use mulch to protect garden soil",
+      "body": "Apply a five to seven centimeter layer of straw, shredded leaves, or bark around outdoor plants. Mulch keeps soil cooler, reduces evaporation, and suppresses weed competition.",
+      "category": "Soil",
+      "tags": ["soil", "mulch", "outdoor"]
+    },
+    {
+      "id": "21",
+      "title": "Use seed starting mix for seedlings",
+      "body": "Start seeds in a sterile, fine-textured seed mix instead of heavy garden soil. This gives delicate roots good contact with moisture and reduces damping-off disease.",
+      "category": "Soil",
+      "tags": ["soil", "seedlings", "indoor"]
+    },
+    {
+      "id": "22",
+      "title": "Avoid reusing soil from diseased plants",
+      "body": "Discard potting mix that held plants with severe rot, mildew, or pests instead of reusing it. Pathogens and eggs can linger in old soil and infect the next plant.",
+      "category": "Soil",
+      "tags": ["soil", "pests", "hygiene"]
+    },
+    {
+      "id": "23",
+      "title": "Fertilize plants only during active growth",
+      "body": "Feed houseplants in spring and summer when they put out new leaves and stems. Pause fertilizing in winter dormancy so unused salts do not accumulate and burn roots.",
+      "category": "Fertilizing",
+      "tags": ["fertilizing", "seasons", "indoor"]
+    },
+    {
+      "id": "24",
+      "title": "Use half-strength fertilizer for houseplants",
+      "body": "Dilute liquid fertilizer to half the label rate for indoor plants to avoid overfeeding. Apply every four to six weeks, and always water first so nutrients do not scorch dry roots.",
+      "category": "Fertilizing",
+      "tags": ["fertilizing", "indoor", "nutrients"]
+    },
+    {
+      "id": "25",
+      "title": "Feed leafy vegetables with nitrogen-rich fertilizer",
+      "body": "Apply a nitrogen-leaning fertilizer to spinach, lettuce, and other greens to encourage lush foliage. Follow package directions closely and stop fertilizing a couple of weeks before harvest.",
+      "category": "Fertilizing",
+      "tags": ["fertilizing", "vegetables", "nitrogen"]
+    },
+    {
+      "id": "26",
+      "title": "Use slow-release fertilizer in outdoor containers",
+      "body": "Mix slow-release granules into potting soil when planting outdoor planters and railing boxes. This gives a steady nutrient supply over several months without constant liquid feeding.",
+      "category": "Fertilizing",
+      "tags": ["fertilizing", "outdoor", "containers"]
+    },
+    {
+      "id": "27",
+      "title": "Flush pots to remove fertilizer salt buildup",
+      "body": "Every few months, water container plants heavily and let plenty of water run through the drainage holes. This rinses accumulated salts that cause brown leaf tips and stressed roots.",
+      "category": "Fertilizing",
+      "tags": ["fertilizing", "maintenance", "indoor"]
+    },
+    {
+      "id": "28",
+      "title": "Avoid fertilizing stressed or recently repotted plants",
+      "body": "Skip fertilizer for a few weeks after repotting or when plants show wilting, pests, or yellowing. Let roots recover first, then resume light feeding once new healthy growth appears.",
+      "category": "Fertilizing",
+      "tags": ["fertilizing", "stress", "indoor"]
+    },
+    {
+      "id": "29",
+      "title": "Quarantine new plants to prevent pest spread",
+      "body": "Keep new purchases in a separate room for one to two weeks before placing them with your collection. Inspect leaves, stems, and soil every few days to catch hidden pests early.",
+      "category": "Pests",
+      "tags": ["pests", "quarantine", "indoor"]
+    },
+    {
+      "id": "30",
+      "title": "Check leaf undersides weekly for pests",
+      "body": "Turn leaves over and look along veins for specks, webbing, or cottony clusters. Early discovery of aphids, mites, or mealybugs lets you treat them before populations explode.",
+      "category": "Pests",
+      "tags": ["pests", "inspection", "indoor"]
+    },
+    {
+      "id": "31",
+      "title": "Use insecticidal soap on soft-bodied pests",
+      "body": "Spray insecticidal soap on aphids, whiteflies, and spider mites, coating both sides of leaves. Repeat every few days for two weeks, and avoid using it in full hot sun to prevent leaf burn.",
+      "category": "Pests",
+      "tags": ["pests", "soap", "organic"]
+    },
+    {
+      "id": "32",
+      "title": "Remove mealybugs with cotton swabs and alcohol",
+      "body": "Dab visible mealybugs with a cotton swab dipped in isopropyl alcohol to dissolve their waxy coating. Check crevices and leaf joints carefully and repeat spot treatments until no new insects appear.",
+      "category": "Pests",
+      "tags": ["pests", "mealybugs", "indoor"]
+    },
+    {
+      "id": "33",
+      "title": "Control fungus gnats by drying topsoil",
+      "body": "Let the top few centimeters of soil dry out before watering again to break the gnat life cycle. Combine this with yellow sticky traps to catch adult flies around your pots.",
+      "category": "Pests",
+      "tags": ["pests", "fungus gnats", "indoor"]
+    },
+    {
+      "id": "34",
+      "title": "Handpick pests early on vegetable plants",
+      "body": "Inspect vegetable leaves early in the morning and remove caterpillars or beetles by hand into a soapy water bucket. Catching pests small prevents holes from spreading across entire beds.",
+      "category": "Pests",
+      "tags": ["pests", "vegetables", "organic"]
+    },
+    {
+      "id": "35",
+      "title": "Encourage beneficial insects in the garden",
+      "body": "Plant nectar-rich flowers like marigolds, alyssum, and dill near your vegetables to attract ladybugs and lacewings. These predators naturally reduce aphid and whitefly populations.",
+      "category": "Pests",
+      "tags": ["pests", "beneficials", "outdoor"]
+    },
+    {
+      "id": "36",
+      "title": "Keep houseplants away from cold drafts",
+      "body": "Avoid placing tropical houseplants directly in front of winter windows or air conditioner vents. Sudden cold gusts cause leaves to yellow and drop even when watering is correct.",
+      "category": "Temperature",
+      "tags": ["temperature", "indoor", "drafts"]
+    },
+    {
+      "id": "37",
+      "title": "Avoid baking plants near heat sources",
+      "body": "Do not set pots on radiators, heaters, or very warm window ledges. High radiant heat dries soil and leaves quickly, stressing roots and increasing watering demands.",
+      "category": "Temperature",
+      "tags": ["temperature", "indoor", "heaters"]
+    },
+    {
+      "id": "38",
+      "title": "Harden off seedlings before planting outside",
+      "body": "Introduce indoor seedlings to outdoor conditions gradually over seven to ten days. Start with a couple of hours in bright shade and calm weather, then extend time and light each day.",
+      "category": "Temperature",
+      "tags": ["temperature", "seedlings", "outdoor"]
+    },
+    {
+      "id": "39",
+      "title": "Protect tender plants from late frosts",
+      "body": "Cover young vegetables and annuals with cloths or frost blankets when cold nights are forecast. Remove covers in the morning once temperatures rise to avoid overheating.",
+      "category": "Temperature",
+      "tags": ["temperature", "frost", "outdoor"]
+    },
+    {
+      "id": "40",
+      "title": "Know minimum temperatures for tropical plants",
+      "body": "Check care guides and avoid exposing tropicals like monstera or calathea to temperatures below about 15 degrees Celsius. If your home cools at night, move them farther from chilly windows.",
+      "category": "Temperature",
+      "tags": ["temperature", "tropical", "indoor"]
+    },
+    {
+      "id": "41",
+      "title": "Repot when roots circle the drainage holes",
+      "body": "Inspect the bottom of nursery pots; if roots are tightly circling or poking through, it is time to repot. Choose a pot one to two sizes larger to give new space without leaving soil waterlogged.",
+      "category": "Repotting",
+      "tags": ["repotting", "roots", "containers"]
+    },
+    {
+      "id": "42",
+      "title": "Loosen root ball gently during repotting",
+      "body": "Massage or tease apart tight root spirals with your fingers before placing the plant in new soil. This encourages roots to grow outward into fresh mix instead of continuing to circle.",
+      "category": "Repotting",
+      "tags": ["repotting", "roots", "indoor"]
+    },
+    {
+      "id": "43",
+      "title": "Always use pots with drainage holes",
+      "body": "Choose containers that allow extra water to escape instead of pooling around roots. If you like decorative pots without holes, keep the plant in a plastic nursery pot that can be lifted out to drain.",
+      "category": "Repotting",
+      "tags": ["repotting", "drainage", "containers"]
+    },
+    {
+      "id": "44",
+      "title": "Repot mostly in spring for faster recovery",
+      "body": "Schedule major repotting when days are lengthening and plants naturally resume active growth. Fresh roots establish faster in spring, helping the plant bounce back from root disturbance.",
+      "category": "Repotting",
+      "tags": ["repotting", "spring", "indoor"]
+    },
+    {
+      "id": "45",
+      "title": "Use nursery pots inside cachepots for flexibility",
+      "body": "Slip plain plastic grow pots inside decorative outer pots so you can remove them easily for watering. This setup keeps furniture dry while still giving plants proper drainage and airflow.",
+      "category": "Repotting",
+      "tags": ["repotting", "containers", "indoor"]
+    },
+    {
+      "id": "46",
+      "title": "Wipe dusty leaves to improve photosynthesis",
+      "body": "Clean large leaves with a soft damp cloth every few weeks to remove dust that blocks light. This simple routine also lets you spot pests or yellowing early on.",
+      "category": "General",
+      "tags": ["cleaning", "leaves", "indoor"]
+    },
+    {
+      "id": "47",
+      "title": "Label plants with names and care notes",
+      "body": "Write the plant name, light preference, and watering guideline on a small tag or in a digital note. Having this quick reference prevents guesswork months after you bring a plant home.",
+      "category": "General",
+      "tags": ["organization", "indoor", "care"]
+    },
+    {
+      "id": "48",
+      "title": "Observe plants closely once a week",
+      "body": "Take a slow walk through your collection looking for drooping leaves, spots, or pests. Early detection turns small issues into quick fixes instead of stressful emergencies.",
+      "category": "General",
+      "tags": ["monitoring", "indoor", "health"]
+    },
+    {
+      "id": "49",
+      "title": "Keep toxic plants away from pets and children",
+      "body": "Research each plant’s toxicity and place risky ones high up or in off-limits rooms. Choose pet-safe alternatives like spider plants or calatheas for accessible spots.",
+      "category": "General",
+      "tags": ["safety", "pets", "indoor"]
+    },
+    {
+      "id": "50",
+      "title": "Avoid moving plants too frequently",
+      "body": "Give plants time to adapt to a chosen spot’s light and temperature instead of shifting them weekly. Constant changes can cause stress, leaf drop, and stalled growth.",
+      "category": "General",
+      "tags": ["general", "placement", "indoor"]
+    },
+    {
+      "id": "51",
+      "title": "Stake tall stems before they flop",
+      "body": "Support tall flowers or vegetables with stakes or cages early in the season while stems are still flexible. Tie them loosely with soft ties so they can grow without being constricted.",
+      "category": "General",
+      "tags": ["support", "outdoor", "vegetables"]
+    },
+    {
+      "id": "52",
+      "title": "Thin crowded seedlings to strongest plants",
+      "body": "Snip extra seedlings at soil level so remaining ones have space, light, and nutrients. Crowded starts become spindly and weak, leading to poor yields later in the garden.",
+      "category": "General",
+      "tags": ["seedlings", "thinning", "vegetables"]
+    },
+    {
+      "id": "53",
+      "title": "Pinch herbs regularly to keep them bushy",
+      "body": "Harvest herb tips by pinching just above a leaf pair to encourage branching. Frequent pinching keeps basil, mint, and oregano compact instead of tall and leggy.",
+      "category": "Pruning",
+      "tags": ["pruning", "herbs", "harvest"]
+    },
+    {
+      "id": "54",
+      "title": "Remove yellow or dead leaves promptly",
+      "body": "Trim off dead or severely yellowed leaves with clean scissors to redirect energy to healthy parts. Removing decaying foliage also reduces hiding places for pests and fungal spores.",
+      "category": "Pruning",
+      "tags": ["pruning", "maintenance", "indoor"]
+    },
+    {
+      "id": "55",
+      "title": "Disinfect pruning tools between plants",
+      "body": "Wipe blades with alcohol or a bleach solution when moving from one plant to another. This simple habit prevents accidentally spreading diseases in your collection.",
+      "category": "Pruning",
+      "tags": ["pruning", "hygiene", "tools"]
+    },
+    {
+      "id": "56",
+      "title": "Cut above leaf nodes for bushier growth",
+      "body": "When pruning, make cuts just above a node where leaves or buds emerge. New shoots will often sprout from that point, creating a fuller, more compact plant.",
+      "category": "Pruning",
+      "tags": ["pruning", "shape", "indoor"]
+    },
+    {
+      "id": "57",
+      "title": "Deadhead spent flowers to extend blooming",
+      "body": "Remove fading blooms from annuals and perennials to prevent them from setting seed. This signals the plant to keep producing new flowers instead of finishing its cycle early.",
+      "category": "Pruning",
+      "tags": ["pruning", "flowers", "outdoor"]
+    },
+    {
+      "id": "58",
+      "title": "Prune woody herbs after flowering",
+      "body": "Trim back rosemary, thyme, and lavender lightly after they bloom to keep them dense. Avoid cutting into very old woody stems; focus on newer green growth for best regrowth.",
+      "category": "Pruning",
+      "tags": ["pruning", "herbs", "outdoor"]
+    },
+    {
+      "id": "59",
+      "title": "Group humidity-loving plants together",
+      "body": "Cluster ferns, calatheas, and other tropicals close so their transpiration raises local humidity. This small microclimate helps prevent crispy leaf edges in dry homes.",
+      "category": "Humidity",
+      "tags": ["humidity", "tropical", "indoor"]
+    },
+    {
+      "id": "60",
+      "title": "Use pebble trays to boost humidity safely",
+      "body": "Place pots on trays of pebbles filled with water just below the pot’s base. As water evaporates, humidity rises around leaves without letting roots sit in soggy soil.",
+      "category": "Humidity",
+      "tags": ["humidity", "pebble tray", "indoor"]
+    },
+    {
+      "id": "61",
+      "title": "Run a humidifier during dry winter months",
+      "body": "Use a small room humidifier near clusters of tropical plants when indoor air is very dry. Aim for gentle, consistent humidity rather than short bursts of mist that disappear quickly.",
+      "category": "Humidity",
+      "tags": ["humidity", "winter", "tropical"]
+    },
+    {
+      "id": "62",
+      "title": "Avoid misting succulents and fuzzy leaves",
+      "body": "Skip misting for succulents, cacti, and plants with hairy foliage like African violets. Water droplets can sit on leaves, encouraging rot and fungal spots instead of helping humidity.",
+      "category": "Humidity",
+      "tags": ["humidity", "succulents", "leaves"]
+    },
+    {
+      "id": "63",
+      "title": "Increase bathroom light for humidity lovers",
+      "body": "If you keep ferns or orchids in a humid bathroom, ensure they still receive bright, indirect light. Supplement with a small grow light if windows are tiny or frosted.",
+      "category": "Humidity",
+      "tags": ["humidity", "bathroom", "light"]
+    },
+    {
+      "id": "64",
+      "title": "Check humidity levels with a hygrometer",
+      "body": "Use an inexpensive digital hygrometer to know how dry your air truly is around plants. Adjust with humidifiers, grouping, or relocating plants until readings match their needs.",
+      "category": "Humidity",
+      "tags": ["humidity", "monitoring", "indoor"]
+    },
+    {
+      "id": "65",
+      "title": "Harvest vegetables at peak ripeness",
+      "body": "Pick tomatoes, beans, and cucumbers regularly as they reach edible size to encourage more production. Letting fruits over-mature on the plant signals it to slow down new flowers.",
+      "category": "General",
+      "tags": ["vegetables", "harvest", "outdoor"]
+    },
+    {
+      "id": "66",
+      "title": "Train vining vegetables onto supports",
+      "body": "Tie cucumber, pea, and pole bean vines to trellises or strings as they grow. Vertical training saves space, improves airflow, and makes harvesting easier.",
+      "category": "General",
+      "tags": ["vegetables", "support", "outdoor"]
+    },
+    {
+      "id": "67",
+      "title": "Companion plant herbs to deter pests",
+      "body": "Interplant strong-scented herbs like basil and marigold with tomatoes or peppers. Their aroma can confuse some pests and attract beneficial insects.",
+      "category": "Pests",
+      "tags": ["pests", "herbs", "companion"]
+    },
+    {
+      "id": "68",
+      "title": "Mulch container herbs to reduce drying",
+      "body": "Add a thin layer of fine bark or gravel on top of herb pots outdoors. This slows moisture loss from the soil surface and protects shallow roots from heat.",
+      "category": "Soil",
+      "tags": ["soil", "herbs", "containers"]
+    },
+    {
+      "id": "69",
+      "title": "Use rainwater for sensitive houseplants",
+      "body": "Collect rainwater or use filtered water for plants that dislike hard tap water, such as calatheas. This reduces leaf spotting and salt buildup in the soil over time.",
+      "category": "Watering",
+      "tags": ["watering", "rainwater", "indoor"]
+    },
+    {
+      "id": "70",
+      "title": "Provide afternoon shade for cool-season greens",
+      "body": "Grow lettuce and spinach where they receive morning sun and dappled afternoon shade in hot climates. Too much midday heat makes them bolt and turn bitter quickly.",
+      "category": "Light",
+      "tags": ["light", "vegetables", "shade"]
+    },
+    {
+      "id": "71",
+      "title": "Raise grow lights as plants get taller",
+      "body": "Keep grow lights 15–30 centimeters above foliage and move them up as plants stretch. Lights placed too close scorch leaves, while those too far away cause weak, leggy growth.",
+      "category": "Light",
+      "tags": ["light", "grow lights", "indoor"]
+    },
+    {
+      "id": "72",
+      "title": "Test soil pH before major amendments",
+      "body": "Use a simple pH test kit on garden beds before adding lime or sulfur. Matching soil pH to your crop’s preference helps nutrients become more available to roots.",
+      "category": "Soil",
+      "tags": ["soil", "ph", "vegetables"]
+    },
+    {
+      "id": "73",
+      "title": "Protect container plants from heavy rain",
+      "body": "Move pots under cover during storms so soil does not stay waterlogged for days. Saturated containers lose oxygen quickly and risk sudden root rot.",
+      "category": "Watering",
+      "tags": ["watering", "outdoor", "containers"]
+    },
+    {
+      "id": "74",
+      "title": "Space outdoor plants for good airflow",
+      "body": "Follow spacing recommendations on seed packets so mature plants are not crowded. Better airflow around foliage lowers the risk of fungal diseases in damp weather.",
+      "category": "General",
+      "tags": ["outdoor", "airflow", "disease"]
+    },
+    {
+      "id": "75",
+      "title": "Use cages to support tomato plants",
+      "body": "Install sturdy cages or stakes when tomatoes are small rather than waiting until they flop. Secured stems are less likely to break under the weight of heavy fruit clusters.",
+      "category": "General",
+      "tags": ["vegetables", "support", "outdoor"]
+    },
+    {
+      "id": "76",
+      "title": "Prune suckers on indeterminate tomatoes",
+      "body": "Remove small shoots that appear between the main stem and side branches on indeterminate types. This channels energy into fewer, stronger fruiting stems and improves airflow.",
+      "category": "Pruning",
+      "tags": ["pruning", "tomatoes", "vegetables"]
+    },
+    {
+      "id": "77",
+      "title": "Let the top inch of soil dry indoors",
+      "body": "For most houseplants, wait until the top two to three centimeters of mix feel dry before watering. This simple rule of thumb prevents chronic overwatering and root suffocation.",
+      "category": "Watering",
+      "tags": ["watering", "indoor", "guideline"]
+    },
+    {
+      "id": "78",
+      "title": "Match pot size to plant’s root system",
+      "body": "Choose a pot only a bit larger than the root ball instead of jumping to a huge container. Oversized pots hold extra wet soil that takes much longer to dry between waterings.",
+      "category": "Repotting",
+      "tags": ["repotting", "pot size", "watering"]
+    },
+    {
+      "id": "79",
+      "title": "Avoid rigid weekly watering schedules",
+      "body": "Do not water automatically on the same day each week regardless of conditions. Instead, test the soil first and water only when it is dry enough for that particular plant.", 
+      "category": "Watering",
+      "tags": ["watering", "schedule", "indoor"]
+    },
+    {
+      "id": "80",
+      "title": "Provide consistent care for reliable growth",
+      "body": "Build a simple routine of checking moisture, light, and leaves at roughly the same time each week. Consistent small actions keep problems from snowballing and help plants thrive long term.",
+      "category": "General",
+      "tags": ["general", "routine", "indoor"]
+    }
+  ]
+}

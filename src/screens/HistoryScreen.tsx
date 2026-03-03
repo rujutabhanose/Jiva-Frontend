@@ -69,7 +69,6 @@ export function HistoryScreen({ history, onNavigate, onSelectScan }: HistoryScre
     <View className="flex-1 bg-background">
       <Header
         title="Scan History"
-        showBeta
       />
 
       <FlatList

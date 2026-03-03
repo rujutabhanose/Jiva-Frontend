@@ -133,7 +133,7 @@ export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps)
         {/* Version info */}
         <View className="absolute bottom-8">
           <Text className="text-xs text-muted-foreground text-center">
-            Version 1.0.0 · Beta Preview
+            Version 1.0.0
           </Text>
         </View>
       </View>
