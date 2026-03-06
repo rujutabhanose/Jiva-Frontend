@@ -6,6 +6,7 @@ import { WelcomeScreen } from "../screens/WelcomeScreen";
 import { SignInScreen } from "../screens/SignInScreen";
 import { RegisterScreen } from "../screens/RegisterScreen";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
+import { CarouselScreen } from "../screens/CarouselScreen"; /* tutorial carousel after onboarding */
 import { ForgotPasswordScreen } from "../screens/ForgotPasswordScreen";
 import { VerifyOTPScreen } from "../screens/VerifyOTPScreen";
 import { ResetPasswordScreen } from "../screens/ResetPasswordScreen";
@@ -171,11 +172,9 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
       console.log('[AuthNavigator] Onboarding data saved successfully');
       Toast.show({ type: 'success', text1: 'Profile updated!' });
 
-      // Now proceed to main app
-      console.log('[AuthNavigator] Getting token and authenticating...');
-      const token = await storage.getToken();
-      console.log('[AuthNavigator] Token retrieved, calling onAuthenticated');
-      onAuthenticated(token || undefined);
+      // after onboarding we show the tutorial carousel before entering the main app
+      console.log('[AuthNavigator] Showing tutorial carousel');
+      setCurrentScreen('carousel');
     } catch (error) {
       console.error('[AuthNavigator] Error during onboarding completion:', error);
       Toast.show({ type: 'error', text1: 'Failed to save preferences', text2: String(error) });
@@ -188,7 +187,12 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
 
     Toast.show({ type: 'success', text1: 'You can complete this later in your profile' });
 
-    // Proceed to main app
+    // Show tutorial carousel before entering the app
+    setCurrentScreen('carousel');
+  };
+
+  const handleCarouselComplete = async () => {
+    console.log('[AuthNavigator] Tutorial carousel finished, authenticating user');
     const token = await storage.getToken();
     onAuthenticated(token || undefined);
   };
@@ -305,6 +309,10 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
           onComplete={handleOnboardingComplete}
           onSkip={handleOnboardingSkip}
         />
+      )}
+
+      {currentScreen === 'carousel' && (
+        <CarouselScreen onFinish={handleCarouselComplete} />
       )}
 
       {currentScreen === 'forgot-password' && (

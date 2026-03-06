@@ -2,7 +2,15 @@
 
 export type RootNavigationState = 'splash' | 'auth' | 'main';
 
-export type AuthScreen = 'welcome' | 'signin' | 'register' | 'onboarding' | 'forgot-password' | 'verify-otp' | 'reset-password';
+export type AuthScreen =
+  | 'welcome'
+  | 'signin'
+  | 'register'
+  | 'onboarding'
+  | 'carousel' /* new tutorial carousel after onboarding */
+  | 'forgot-password'
+  | 'verify-otp'
+  | 'reset-password';
 
 export type MainTabScreen = 'home' | 'history' | 'profile';
 

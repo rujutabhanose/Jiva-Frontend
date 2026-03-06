@@ -1,8 +1,11 @@
 // Storage utility for managing authentication tokens
 // Uses AsyncStorage for React Native
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// Use SecureStore when available for improved token persistence & security
+import * as SecureStore from 'expo-secure-store';
 
 const TOKEN_KEY = 'jiva_auth_token';
+const SECURE_TOKEN_KEY = 'jiva_auth_token_secure';
 const USER_KEY = 'jiva_user_data';
 
 // User type options
@@ -25,7 +28,16 @@ export const storage = {
   // Token management
   async setToken(token: string): Promise<void> {
     try {
-      await AsyncStorage.setItem(TOKEN_KEY, token);
+      // Prefer SecureStore for tokens (more persistent & secure on device)
+      try {
+        await SecureStore.setItemAsync(SECURE_TOKEN_KEY, token);
+        // Keep a fallback copy in AsyncStorage for environments where SecureStore
+        // may not be available (e.g., web during development)
+        await AsyncStorage.setItem(TOKEN_KEY, token);
+      } catch (secureErr) {
+        // SecureStore failed -> fall back to AsyncStorage
+        await AsyncStorage.setItem(TOKEN_KEY, token);
+      }
     } catch (error) {
       console.error('Error saving token:', error);
     }
@@ -33,6 +45,14 @@ export const storage = {
 
   async getToken(): Promise<string | null> {
     try {
+      // Try SecureStore first
+      try {
+        const secure = await SecureStore.getItemAsync(SECURE_TOKEN_KEY);
+        if (secure) return secure;
+      } catch (secureErr) {
+        // ignore and fallback
+      }
+
       return await AsyncStorage.getItem(TOKEN_KEY);
     } catch (error) {
       console.error('Error getting token:', error);
@@ -42,6 +62,11 @@ export const storage = {
 
   async removeToken(): Promise<void> {
     try {
+      try {
+        await SecureStore.deleteItemAsync(SECURE_TOKEN_KEY);
+      } catch (secureErr) {
+        // ignore
+      }
       await AsyncStorage.removeItem(TOKEN_KEY);
     } catch (error) {
       console.error('Error removing token:', error);
