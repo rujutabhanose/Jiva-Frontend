@@ -97,11 +97,9 @@ async function safeFetch(url: string, options: RequestInit, timeoutMs: number = 
         throw authError;
       }
 
-      // For other requests, 401 means session expired - clear the invalid token
-      const { storage } = await import('../utils/storage');
-      await storage.clearAll();
-
-      // Throw a special error that can be caught to redirect to login
+      // For other requests, 401 means session expired.
+      // Do NOT clear the token here — let the UI layer decide.
+      // Clearing it here can wipe a valid token due to transient server errors.
       const authError: ApiError = new Error('Session expired. Please log in again.');
       authError.statusCode = 401;
       authError.userFriendlyError = {
@@ -444,10 +442,9 @@ export async function diagnosePlant(imageUri: string): Promise<DiagnosisResult> 
 
     // Check if diagnosis was successful
     if (rawData.success === false) {
-      const diagnosisError: ApiError = new Error(rawData.message || 'Diagnosis failed');
-      diagnosisError.userFriendlyError = categorizeError({
-        message: rawData.message || 'Unable to diagnose the plant. Please try again with a clearer image.'
-      });
+      const reason = rawData.reason || rawData.message || 'Diagnosis failed';
+      const diagnosisError: ApiError = new Error(reason);
+      diagnosisError.userFriendlyError = categorizeError({ message: reason });
       throw diagnosisError;
     }
 

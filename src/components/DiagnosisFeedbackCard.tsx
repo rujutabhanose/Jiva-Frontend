@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput } from 'react-native';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
-import { MessageCircleQuestion, ThumbsUp, ThumbsDown, Send, SkipForward, CheckCircle, Brain } from 'lucide-react-native';
+import { MessageCircleQuestion, ThumbsUp, ThumbsDown, Send, SkipForward, Brain } from 'lucide-react-native';
 import { submitDiagnosisFeedback } from '../services/api';
 
 type FeedbackState = 'initial' | 'correction' | 'thanks' | 'skipped';
@@ -88,7 +88,7 @@ export function DiagnosisFeedbackCard({
 
   if (feedbackState === 'thanks') {
     return (
-      <Card className="border-primary/30 bg-primary/5 mb-5">
+      <Card className="border-primary/30 bg-primary/5 mb-5" style={{ shadowOpacity: 0, elevation: 0 }}>
         <View className="items-center py-2">
           <View className="w-12 h-12 bg-primary/15 rounded-full items-center justify-center mb-3">
             <Brain size={24} color="#3F7C4C" />

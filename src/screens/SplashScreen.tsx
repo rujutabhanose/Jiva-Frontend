@@ -15,6 +15,9 @@ export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps)
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const funFactFadeAnim = useRef(new Animated.Value(0)).current;
+  // Use a ref so parent re-renders don't reset the timer
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     // Select a random fun fact immediately
@@ -47,13 +50,14 @@ export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps)
       }).start();
     }, 700);
 
-    // Complete splash screen after duration
+    // Complete splash screen after duration — runs once, ref keeps callback current
     const timer = setTimeout(() => {
-      onComplete();
+      onCompleteRef.current();
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [onComplete, duration, fadeAnim, scaleAnim, funFactFadeAnim]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duration]);
 
   return (
     <LinearGradient

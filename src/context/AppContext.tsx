@@ -30,6 +30,7 @@ interface AppContextType {
   scansUsed: number;
   scansLimit: number;
   isPro: boolean;
+  isIndiaUser: boolean;
   history: Scan[];
   currentScan: Scan | null;
   saveScan: (scan: Scan, backendMeta?: any) => Promise<void>;
@@ -66,12 +67,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [userId, setUserId] = useState("");
   const [scansUsed, setScansUsed] = useState(0);
   const [isPro, setIsPro] = useState(false);
+  const [indiaFreeExpiresAt, setIndiaFreeExpiresAt] = useState<string | null>(null);
   const [history, setHistory] = useState<Scan[]>([]);
   const [currentScan, setCurrentScan] = useState<Scan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const scansLimit = isPro ? Infinity : 1;
-  const canScan = isPro || scansUsed < scansLimit;
+  const isIndiaUser = Boolean(indiaFreeExpiresAt && new Date(indiaFreeExpiresAt) > new Date());
+  const scansLimit = isPro || isIndiaUser ? Infinity : 1;
+  const canScan = isPro || isIndiaUser || scansUsed < scansLimit;
 
   // Initialize user data from storage and sync with backend
   useEffect(() => {
@@ -129,6 +132,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
             setScansUsed(data.scans_used || 0);
             setIsPro(data.is_premium || false);
+            setIndiaFreeExpiresAt(data.india_free_expires_at || null);
 
             // Update local storage with backend data
             await AsyncStorage.setItem(STORAGE_KEYS.SCANS_USED, (data.scans_used || 0).toString());
@@ -892,6 +896,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
           setScansUsed(scansUsed);
           setIsPro(isPremium);
+          setIndiaFreeExpiresAt(data.india_free_expires_at || null);
           await AsyncStorage.setItem(STORAGE_KEYS.SCANS_USED, scansUsed.toString());
           await AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, isPremium ? 'true' : 'false');
 
@@ -977,6 +982,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         scansUsed,
         scansLimit,
         isPro,
+        isIndiaUser,
         history,
         currentScan,
         saveScan,

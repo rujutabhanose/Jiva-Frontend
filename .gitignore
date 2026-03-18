@@ -35,6 +35,9 @@ yarn-error.*
 *.pyc
 .DS_Store
 
+# Secrets
+google-play-service-account.json
+
 # Env
 .env
 .env.local

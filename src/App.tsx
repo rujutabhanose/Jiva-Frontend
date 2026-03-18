@@ -22,6 +22,7 @@ function AppContent() {
     updateScanNotes,
     deleteScan,
     isPro,
+    isIndiaUser,
     upgradeToPro,
     cancelSubscription,
     redeemCoupon,
@@ -38,6 +39,7 @@ function AppContent() {
       scansUsed={scansUsed}
       scansLimit={scansLimit}
       isPro={isPro}
+      isIndiaUser={isIndiaUser}
       canScan={canScan}
       history={history}
       currentScan={currentScan}

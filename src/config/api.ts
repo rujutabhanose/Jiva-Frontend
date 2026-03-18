@@ -9,26 +9,18 @@ import Constants from 'expo-constants';
 // Detect if running on physical device vs emulator/simulator
 const isDevice = Constants.isDevice;
 
-// Your computer's local IP address (for physical device testing)
-const LOCAL_IP = '192.168.0.121';
-
 // Get the appropriate base URL based on platform and device type
 function getApiBaseUrl(): string {
   if (!__DEV__) {
     return 'https://api.jivaplants.com'; // Production
   }
 
-  // Running on physical device - use computer's IP
+  // Running on physical device - use production server
   if (isDevice) {
-    return `http://${LOCAL_IP}:8000`;
+    return 'https://api.jivaplants.com';
   }
 
-  // Running on emulator/simulator
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:8000';  // Android Emulator
-  } else {
-    return 'https://api.jivaplants.com';  // iOS Simulator → production server
-  }
+  return 'https://api.jivaplants.com';
 }
 
 export const API_BASE_URL = getApiBaseUrl();

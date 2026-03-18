@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "jiva-plants",
+    "name": "Jiva Plants",
     "slug": "jiva-plants",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -29,6 +29,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.jiva.plants",
+      "versionCode": 11,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",

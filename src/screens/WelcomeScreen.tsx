@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface WelcomeScreenProps {
   onGetStarted: () => void;
@@ -46,14 +46,27 @@ export function WelcomeScreen({
 {/* Hero Section (No Card) */}
 <View className="w-full mb-10 items-center">
 
-  <Image
-    source={require("../../assets/welcome-photo.webp")}
-    style={{
-      width: "100%",
-      height: 260,
-    }}
-    resizeMode="contain"
-  />
+  <View style={{ width: "100%", height: 260 }}>
+    <Image
+      source={require("../../assets/welcome-photo.webp")}
+      style={{ width: "100%", height: 260 }}
+      resizeMode="contain"
+    />
+    {/* Left fade */}
+    <LinearGradient
+      colors={["#ffffff", "rgba(255,255,255,0)"]}
+      start={{ x: 0, y: 0.5 }}
+      end={{ x: 1, y: 0.5 }}
+      style={{ position: "absolute", top: 0, left: 0, width: "20%", height: "100%" }}
+    />
+    {/* Right fade */}
+    <LinearGradient
+      colors={["rgba(255,255,255,0)", "#ffffff"]}
+      start={{ x: 0, y: 0.5 }}
+      end={{ x: 1, y: 0.5 }}
+      style={{ position: "absolute", top: 0, right: 0, width: "20%", height: "100%" }}
+    />
+  </View>
 
   <View className="mt-6 gap-3">
     <Text className="text-[24px] font-bold text-center leading-snug">

@@ -222,10 +222,16 @@ export function CropScreen({ image, onCrop, onCancel }: CropScreenProps) {
 
       {/* Image container with crop overlay */}
       <View style={{ flex: 1 }} onLayout={onContainerLayout} {...panResponder.panHandlers}>
-        <RNImage source={{ uri: image }} style={StyleSheet.absoluteFill} resizeMode="contain" />
+        {/* pointerEvents="none" on every child so all touches reach the PanResponder */}
+        <RNImage
+          source={{ uri: image }}
+          style={StyleSheet.absoluteFill}
+          resizeMode="contain"
+          pointerEvents="none"
+        />
 
         {ready && (
-          <>
+          <View style={StyleSheet.absoluteFill} pointerEvents="none">
             {/* Dark overlays outside crop rect */}
             <View style={[styles.overlay, { top: 0, left: 0, right: 0, height: r.y }]} />
             <View style={[styles.overlay, { top: r.y + r.height, left: 0, right: 0, bottom: 0 }]} />
@@ -260,11 +266,11 @@ export function CropScreen({ image, onCrop, onCancel }: CropScreenProps) {
             ].map((pos, i) => (
               <View key={i} style={[styles.cornerHandle, pos]} />
             ))}
-          </>
+          </View>
         )}
 
         {applying && (
-          <View style={[StyleSheet.absoluteFill, styles.loadingOverlay]}>
+          <View style={[StyleSheet.absoluteFill, styles.loadingOverlay]} pointerEvents="none">
             <ActivityIndicator color="#fff" size="large" />
           </View>
         )}

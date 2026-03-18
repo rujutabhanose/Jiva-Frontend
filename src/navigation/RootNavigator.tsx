@@ -35,6 +35,7 @@ interface RootNavigatorProps {
   scansUsed: number;
   scansLimit: number;
   isPro: boolean;
+  isIndiaUser: boolean;
   canScan: boolean;
   history: any[];
   currentScan: any | null;
@@ -54,6 +55,7 @@ export function RootNavigator({
   scansUsed,
   scansLimit,
   isPro,
+  isIndiaUser,
   canScan,
   history,
   currentScan,
@@ -493,7 +495,7 @@ export function RootNavigator({
           onSelectScan={handleViewHistory}
           onJoinBeta={() => Toast.show({ type: 'success', text1: 'Beta program functionality coming soon' })}
           onLogout={handleLogout}
-          onUpgrade={() => setShowUpgradeModal(true)}
+          onUpgrade={() => !isIndiaUser && setShowUpgradeModal(true)}
           onCancelSubscription={handleCancelSubscription}
           onDeleteAccount={handleDeleteAccount}
           activeTab={activeTab}
@@ -566,7 +568,7 @@ export function RootNavigator({
             setShowUpgradeModal(true);
           }}
           onSessionExpired={async () => {
-            // safeFetch already cleared the token
+            await storage.clearAll();
             setModalScreen(null);
             setCapturedImage(null);
             setRootState('auth');
@@ -590,7 +592,7 @@ export function RootNavigator({
             setShowUpgradeModal(true);
           }}
           onSessionExpired={async () => {
-            // safeFetch already cleared the token
+            await storage.clearAll();
             setModalScreen(null);
             setCapturedImage(null);
             setRootState('auth');
@@ -754,10 +756,10 @@ export function RootNavigator({
         />
       )}
 
-      {/* Upgrade Modal */}
+      {/* Upgrade Modal — never shown for India users */}
       {console.log('[RootNavigator] Passing deviceId to UpgradeModal:', userId)}
       <UpgradeModal
-        visible={showUpgradeModal}
+        visible={showUpgradeModal && !isIndiaUser}
         onClose={() => setShowUpgradeModal(false)}
         onSelectPlan={handleSelectPlan}
         onRedeemCoupon={redeemCoupon}
