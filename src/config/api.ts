@@ -50,6 +50,7 @@ export const API_ENDPOINTS = {
   REGISTER: `${API_BASE_URL}/api/v1/auth/register`,
   LOGIN: `${API_BASE_URL}/api/v1/auth/login`,
   LOGOUT: `${API_BASE_URL}/api/v1/auth/logout`,
+  REFRESH: `${API_BASE_URL}/api/v1/auth/refresh`,
   RESEND_VERIFICATION: `${API_BASE_URL}/api/v1/auth/resend-verification`,
   FORGOT_PASSWORD: `${API_BASE_URL}/api/v1/auth/forgot-password`,
   VERIFY_RESET_OTP: `${API_BASE_URL}/api/v1/auth/verify-reset-otp`,

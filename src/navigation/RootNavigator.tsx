@@ -1,6 +1,6 @@
 // src/navigation/RootNavigator.tsx
 import React from "react";
-import { View, Modal } from "react-native";
+import { View, Modal, BackHandler } from "react-native";
 import { useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as ExpoSplashScreen from 'expo-splash-screen';
@@ -77,6 +77,42 @@ export function RootNavigator({
 
   React.useEffect(() => {
     console.log('[RootNavigator] modalScreen state changed to:', modalScreen);
+  }, [modalScreen]);
+
+  React.useEffect(() => {
+    const onBackPress = () => {
+      if (modalScreen === 'camera') {
+        setModalScreen('scan-start');
+        return true;
+      }
+      if (modalScreen === 'image-preview') {
+        setCapturedImage(null);
+        setModalScreen('scan-start');
+        return true;
+      }
+      if (modalScreen === 'image-crop') {
+        setModalScreen('image-preview');
+        return true;
+      }
+      if (modalScreen === 'analysis-diagnose' || modalScreen === 'analysis-identify') {
+        setModalScreen('image-preview');
+        return true;
+      }
+      if (modalScreen === 'condition-detail') {
+        setModalScreen('history-detail');
+        return true;
+      }
+      if (modalScreen !== null) {
+        // scan-start, diagnosis, plant-identification, scan-limit,
+        // history-detail, learn, plant-care-tips, privacy-policy, edit-preferences
+        handleBackToMain();
+        return true;
+      }
+      return false; // let OS handle (exit app) when on main tabs
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
   }, [modalScreen]);
   const [capturedImage, setCapturedImage] = React.useState<string | null>(null);
   const [imageSource, setImageSource] = React.useState<'camera' | 'gallery'>('camera');

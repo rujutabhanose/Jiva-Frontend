@@ -199,7 +199,7 @@ export function HomeScreen({
 
                     <View className="flex-1">
                       <Text className="text-base font-semibold mb-1">
-                        Revive Your Plant
+                        Detect Issues Early
                       </Text>
                       <Text className="text-sm text-muted-foreground">
                         Cure and Care

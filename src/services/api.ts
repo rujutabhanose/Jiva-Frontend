@@ -39,6 +39,7 @@ export interface UserData {
 
 export interface AuthResponse {
   access_token: string;
+  refresh_token: string;
   token_type: string;
   user: UserData;
 }
@@ -52,11 +53,15 @@ function createTimeoutPromise(ms: number): Promise<never> {
   });
 }
 
+// Prevent concurrent refresh attempts
+let isRefreshing = false;
+
 /**
- * Safe fetch with timeout and error handling
- * Automatically handles 401 Unauthorized by clearing invalid tokens
+ * Safe fetch with timeout and error handling.
+ * On 401, silently attempts to refresh the access token and retries the request once.
+ * @param skipRefresh - internal flag to prevent recursive refresh calls
  */
-async function safeFetch(url: string, options: RequestInit, timeoutMs: number = 30000): Promise<Response> {
+async function safeFetch(url: string, options: RequestInit, timeoutMs: number = 30000, skipRefresh: boolean = false): Promise<Response> {
   try {
     console.log('[safeFetch] Request to:', url);
     console.log('[safeFetch] Headers:', JSON.stringify(options.headers || {}, null, 2));
@@ -76,16 +81,12 @@ async function safeFetch(url: string, options: RequestInit, timeoutMs: number = 
     if (response.status === 401) {
       console.warn('[safeFetch] 401 Unauthorized');
       console.warn('[safeFetch] Failed URL:', url);
-      console.warn('[safeFetch] Request headers were:', JSON.stringify(options.headers || {}, null, 2));
 
-      // Import ErrorType
       const { ErrorType } = await import('../utils/errorHandler');
 
-      // Check if this is a login request - 401 on login means invalid credentials, not session expiry
+      // Login 401 = invalid credentials, not session expiry
       const isLoginRequest = url.includes('/auth/login');
-
       if (isLoginRequest) {
-        // For login requests, 401 means invalid credentials
         const authError: ApiError = new Error('Invalid email or password.');
         authError.statusCode = 401;
         authError.userFriendlyError = {
@@ -97,9 +98,47 @@ async function safeFetch(url: string, options: RequestInit, timeoutMs: number = 
         throw authError;
       }
 
-      // For other requests, 401 means session expired.
-      // Do NOT clear the token here — let the UI layer decide.
-      // Clearing it here can wipe a valid token due to transient server errors.
+      // Try a silent token refresh (only once, never on the refresh call itself)
+      if (!skipRefresh && !isRefreshing) {
+        const { storage } = await import('../utils/storage');
+        const refreshToken = await storage.getRefreshToken();
+
+        if (refreshToken) {
+          isRefreshing = true;
+          try {
+            const refreshResponse = await safeFetch(
+              API_ENDPOINTS.REFRESH,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refresh_token: refreshToken }),
+              },
+              15000,
+              true, // skipRefresh — don't recurse
+            );
+
+            if (refreshResponse.ok) {
+              const tokens = await refreshResponse.json();
+              await storage.setToken(tokens.access_token);
+              await storage.setRefreshToken(tokens.refresh_token);
+              console.log('[safeFetch] Token refreshed successfully, retrying original request');
+
+              // Retry original request with new access token
+              const newHeaders: Record<string, string> = {
+                ...(options.headers as Record<string, string>),
+                Authorization: `Bearer ${tokens.access_token}`,
+              };
+              return safeFetch(url, { ...options, headers: newHeaders }, timeoutMs, true);
+            }
+          } catch (refreshErr) {
+            console.warn('[safeFetch] Token refresh failed:', refreshErr);
+          } finally {
+            isRefreshing = false;
+          }
+        }
+      }
+
+      // Refresh unavailable or failed — session truly expired
       const authError: ApiError = new Error('Session expired. Please log in again.');
       authError.statusCode = 401;
       authError.userFriendlyError = {
@@ -113,12 +152,10 @@ async function safeFetch(url: string, options: RequestInit, timeoutMs: number = 
 
     return response;
   } catch (error: any) {
-    // If it's already our auth error, re-throw it
     if (error.statusCode === 401) {
       throw error;
     }
 
-    // Re-throw with enhanced error info
     const enhancedError: ApiError = error instanceof Error ? error : new Error(String(error));
     enhancedError.userFriendlyError = categorizeError(error);
     throw enhancedError;

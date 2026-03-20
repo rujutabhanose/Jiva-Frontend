@@ -6,6 +6,8 @@ import * as SecureStore from 'expo-secure-store';
 
 const TOKEN_KEY = 'jiva_auth_token';
 const SECURE_TOKEN_KEY = 'jiva_auth_token_secure';
+const REFRESH_TOKEN_KEY = 'jiva_refresh_token';
+const SECURE_REFRESH_TOKEN_KEY = 'jiva_refresh_token_secure';
 const USER_KEY = 'jiva_user_data';
 
 // User type options
@@ -70,6 +72,48 @@ export const storage = {
       await AsyncStorage.removeItem(TOKEN_KEY);
     } catch (error) {
       console.error('Error removing token:', error);
+    }
+  },
+
+  // Refresh token management
+  async setRefreshToken(token: string): Promise<void> {
+    try {
+      try {
+        await SecureStore.setItemAsync(SECURE_REFRESH_TOKEN_KEY, token);
+        await AsyncStorage.setItem(REFRESH_TOKEN_KEY, token);
+      } catch (secureErr) {
+        await AsyncStorage.setItem(REFRESH_TOKEN_KEY, token);
+      }
+    } catch (error) {
+      console.error('Error saving refresh token:', error);
+    }
+  },
+
+  async getRefreshToken(): Promise<string | null> {
+    try {
+      try {
+        const secure = await SecureStore.getItemAsync(SECURE_REFRESH_TOKEN_KEY);
+        if (secure) return secure;
+      } catch (secureErr) {
+        // ignore and fallback
+      }
+      return await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+    } catch (error) {
+      console.error('Error getting refresh token:', error);
+      return null;
+    }
+  },
+
+  async removeRefreshToken(): Promise<void> {
+    try {
+      try {
+        await SecureStore.deleteItemAsync(SECURE_REFRESH_TOKEN_KEY);
+      } catch (secureErr) {
+        // ignore
+      }
+      await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
+    } catch (error) {
+      console.error('Error removing refresh token:', error);
     }
   },
 
@@ -151,9 +195,10 @@ export const storage = {
     }
   },
 
-  // Clear auth token only - preserve user data and preferences
+  // Clear auth tokens only - preserve user data and preferences
   async clearAll(): Promise<void> {
     await this.removeToken();
+    await this.removeRefreshToken();
     // Don't remove user data to preserve preferences across logout/login
     // await this.removeUserData();
   },

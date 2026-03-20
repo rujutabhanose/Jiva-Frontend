@@ -1,6 +1,6 @@
 // src/navigation/AuthNavigator.tsx
 import React from "react";
-import { Platform } from "react-native";
+import { Platform, BackHandler } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WelcomeScreen } from "../screens/WelcomeScreen";
 import { SignInScreen } from "../screens/SignInScreen";
@@ -36,6 +36,32 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
   const [resetPasswordLoading, setResetPasswordLoading] = React.useState(false);
   const [resetPasswordError, setResetPasswordError] = React.useState<string | null>(null);
 
+  React.useEffect(() => {
+    const onBackPress = () => {
+      if (currentScreen === 'signin' || currentScreen === 'register') {
+        setCurrentScreen('welcome');
+        return true;
+      }
+      if (currentScreen === 'forgot-password') {
+        setCurrentScreen('signin');
+        return true;
+      }
+      if (currentScreen === 'verify-otp') {
+        setCurrentScreen('forgot-password');
+        return true;
+      }
+      if (currentScreen === 'reset-password') {
+        setCurrentScreen('verify-otp');
+        return true;
+      }
+      // welcome, onboarding, carousel — let OS handle (exit app)
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [currentScreen]);
+
   const handleGetStarted = () => {
     setCurrentScreen('register');
   };
@@ -50,8 +76,9 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
       const authResponse = await loginUser(email, password);
       console.log('[AuthNavigator] Login response:', authResponse);
 
-      // Save token
+      // Save tokens
       await storage.setToken(authResponse.access_token);
+      await storage.setRefreshToken(authResponse.refresh_token);
 
       // Save user data from backend
       await storage.setUserData({
@@ -104,8 +131,9 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
       console.log('[AuthNavigator DEBUG] Backend isPremium:', authResponse.user.isPremium);
       console.log('[AuthNavigator DEBUG] Backend isPremium type:', typeof authResponse.user.isPremium);
 
-      // Save token
+      // Save tokens
       await storage.setToken(authResponse.access_token);
+      await storage.setRefreshToken(authResponse.refresh_token);
 
       // Save user data from backend
       await storage.setUserData({
