@@ -14,30 +14,42 @@ export function CameraScreen({ onCapture, onClose, mode = 'diagnose' }: CameraSc
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
 
-  // Handle Android back button
+  // Handle Android back button — only active after permission is granted
   useEffect(() => {
+    if (!permission?.granted) return;
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       onClose();
-      return true; // Prevent default back behavior
+      return true;
     });
-
     return () => backHandler.remove();
-  }, [onClose]);
-
-  // Request permission on mount if not already granted
-  useEffect(() => {
-    if (permission && !permission.granted && permission.canAskAgain) {
-      requestPermission();
-    }
-  }, [permission, requestPermission]);
+  }, [permission?.granted, onClose]);
 
   if (!permission) return <View style={styles.container} />;
+
+  // Pre-permission screen — no exit button, only "Continue" leads to system dialog
+  if (!permission.granted && permission.canAskAgain)
+    return (
+      <View style={styles.permissionDenied}>
+        <Text style={styles.permissionTitle}>Camera Access Needed</Text>
+        <Text style={styles.permissionText}>
+          {mode === 'identify'
+            ? 'Jiva needs camera access to identify your plant.'
+            : 'Jiva needs camera access to diagnose your plant.'}
+        </Text>
+        <TouchableOpacity onPress={requestPermission} style={styles.backButton}>
+          <Text style={styles.backButtonText}>Continue</Text>
+        </TouchableOpacity>
+      </View>
+    );
 
   if (!permission.granted)
     return (
       <View style={styles.container}>
         <View style={styles.permissionDenied}>
-          <Text style={styles.permissionText}>Camera permission denied</Text>
+          <Text style={styles.permissionTitle}>Camera Access Denied</Text>
+          <Text style={styles.permissionText}>
+            Please enable camera access in your device Settings to scan plants.
+          </Text>
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
@@ -174,11 +186,19 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#F7F4EC',
   },
-  permissionText: {
-    fontSize: 16,
+  permissionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
     color: '#1F2933',
-    marginBottom: 20,
+    marginBottom: 8,
     textAlign: 'center',
+  },
+  permissionText: {
+    fontSize: 15,
+    color: '#4B5563',
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 22,
   },
   backButton: {
     paddingHorizontal: 20,

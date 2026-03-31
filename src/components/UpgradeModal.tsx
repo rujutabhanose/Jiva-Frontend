@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, Pressable, ScrollView, ActivityIndicator, TextInput, Alert } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, Pressable, ScrollView, ActivityIndicator, TextInput, Alert, Linking, Platform } from 'react-native';
 import { Card } from './ui/Card';
 import { X, Check, Zap, Shield, AlertCircle } from 'lucide-react-native';
 import { usePurchases } from '../hooks/usePurchases';
@@ -342,6 +342,29 @@ export function UpgradeModal({
                   Continue with limited access
                 </Text>
               </TouchableOpacity>
+
+              {/* Subscription legal footer — required by App Store & Play Store */}
+              <View style={{ marginTop: 16, alignItems: 'center' }}>
+                <Text style={{ fontSize: 11, color: '#9CA3AF', textAlign: 'center', lineHeight: 16, marginBottom: 8 }}>
+                  Jivaplants Pro · auto-renews unless cancelled at least 24 hours before renewal.{'\n'}
+                  {Platform.OS === 'ios'
+                    ? 'Manage or cancel in Apple ID Settings.'
+                    : 'Manage or cancel in Google Play Settings.'}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <TouchableOpacity onPress={() => Linking.openURL('https://jivaplants.com/privacy')}>
+                    <Text style={{ fontSize: 12, color: '#007AFF', textDecorationLine: 'underline' }}>Privacy Policy</Text>
+                  </TouchableOpacity>
+                  <Text style={{ color: '#9CA3AF', fontSize: 12, marginHorizontal: 4 }}> · </Text>
+                  <TouchableOpacity onPress={() => Linking.openURL(
+                    Platform.OS === 'ios'
+                      ? 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/'
+                      : 'https://jivaplants.com/privacy'
+                  )}>
+                    <Text style={{ fontSize: 12, color: '#007AFF', textDecorationLine: 'underline' }}>Terms of Use</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </ScrollView>
           </Card>
         </View>
