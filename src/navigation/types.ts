@@ -17,7 +17,6 @@ export type MainTabScreen = 'home' | 'history' | 'profile';
 export type AppScreen =
   | 'scan-start'
   | 'camera'
-  | 'permissions'
   | 'image-preview'
   | 'image-crop'
   | 'analysis-diagnose'

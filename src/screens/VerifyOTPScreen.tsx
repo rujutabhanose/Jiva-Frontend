@@ -117,7 +117,7 @@ export function VerifyOTPScreen({
             {otp.map((digit, index) => (
               <TextInput
                 key={index}
-                ref={(ref) => (inputRefs.current[index] = ref)}
+                ref={(ref) => { inputRefs.current[index] = ref; }}
                 className="w-12 h-14 border-2 border-border rounded-xl text-center text-xl font-bold bg-background"
                 style={{
                   borderColor: digit ? '#2d5a27' : '#e5e7eb',

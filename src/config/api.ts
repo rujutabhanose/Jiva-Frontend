@@ -60,8 +60,7 @@ export const API_ENDPOINTS = {
   PROFILE: `${API_BASE_URL}/api/v1/users/me`,
   UPGRADE_TO_PRO: `${API_BASE_URL}/api/v1/users/upgrade`,
   CANCEL_SUBSCRIPTION: `${API_BASE_URL}/api/v1/users/cancel-subscription`,
-  REDEEM_COUPON: `${API_BASE_URL}/api/v1/users/redeem-coupon`,
-  VALIDATE_COUPON: `${API_BASE_URL}/api/v1/users/validate-coupon`,
+
   DELETE_ACCOUNT: `${API_BASE_URL}/api/v1/users/me`,
 
   // Scan endpoints

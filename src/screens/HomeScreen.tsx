@@ -63,6 +63,7 @@ export function HomeScreen({
   const [userName, setUserName] = React.useState("");
   const [randomTip, setRandomTip] = React.useState("");
 
+
   /* ----------------------------------
      Hero floating animation
   ----------------------------------- */
@@ -312,7 +313,6 @@ export function HomeScreen({
         </View>
       </ScrollView>
 
-      {/* UpgradeModal is now handled in RootNavigator */}
     </View>
   );
 }

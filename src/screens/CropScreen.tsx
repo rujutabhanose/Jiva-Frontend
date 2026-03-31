@@ -223,12 +223,13 @@ export function CropScreen({ image, onCrop, onCancel }: CropScreenProps) {
       {/* Image container with crop overlay */}
       <View style={{ flex: 1 }} onLayout={onContainerLayout} {...panResponder.panHandlers}>
         {/* pointerEvents="none" on every child so all touches reach the PanResponder */}
-        <RNImage
-          source={{ uri: image }}
-          style={StyleSheet.absoluteFill}
-          resizeMode="contain"
-          pointerEvents="none"
-        />
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <RNImage
+            source={{ uri: image }}
+            style={StyleSheet.absoluteFill}
+            resizeMode="contain"
+          />
+        </View>
 
         {ready && (
           <View style={StyleSheet.absoluteFill} pointerEvents="none">

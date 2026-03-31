@@ -109,6 +109,9 @@ export function ScanStartScreen({
         <Text className="text-sm text-muted-foreground">
           Best for live plant photos
         </Text>
+        <Text className="text-xs text-muted-foreground mt-1">
+          We use your camera only to capture plant photos for diagnosis.
+        </Text>
       </View>
 
       <Text className="text-xs font-semibold text-[#3F6B3A]">

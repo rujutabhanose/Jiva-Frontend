@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, Pressable, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, Pressable, ScrollView, ActivityIndicator, TextInput, Alert } from 'react-native';
 import { Card } from './ui/Card';
-import { Button } from './ui/Button';
-import { X, Check, Zap, Shield, Tag, AlertCircle } from 'lucide-react-native';
+import { X, Check, Zap, Shield, AlertCircle } from 'lucide-react-native';
 import { usePurchases } from '../hooks/usePurchases';
-import Toast from 'react-native-toast-message';
+import { usePromoCodeRedemption } from '../hooks/usePromoCodeRedemption';
 import { PurchasesPackage } from 'react-native-purchases';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,7 +11,6 @@ interface UpgradeModalProps {
   visible: boolean;
   onClose: () => void;
   onSelectPlan: (plan: 'monthly' | 'yearly') => void;
-  onRedeemCoupon?: (couponCode: string) => Promise<{ success: boolean; message: string }>;
   onUpgradeSuccess?: () => void;
   deviceId?: string;
   scansUsed: number;
@@ -23,20 +21,35 @@ export function UpgradeModal({
   visible,
   onClose,
   onSelectPlan,
-  onRedeemCoupon,
   onUpgradeSuccess,
   deviceId,
   scansUsed,
   scansLimit
 }: UpgradeModalProps) {
   const { offerings, purchasePackage, isLoading: isPurchasing, error: purchaseError, retryFetchOfferings } = usePurchases();
-  const [couponCode, setCouponCode] = useState('');
-  const [isRedeeming, setIsRedeeming] = useState(false);
-  const [couponError, setCouponError] = useState('');
-  const [couponSuccess, setCouponSuccess] = useState('');
   const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
-  const [showCoupon, setShowCoupon] = useState(false);
   const [purchaseErrorMessage, setPurchaseErrorMessage] = useState<string | null>(null);
+  const [promoCode, setPromoCode] = useState('');
+  const [isRedeeming, setIsRedeeming] = useState(false);
+
+  const { redeemCode } = usePromoCodeRedemption((_customerInfo) => {
+    Alert.alert('Pro Activated!', 'You now have free pro access.');
+    if (onUpgradeSuccess) {
+      onUpgradeSuccess();
+    }
+    setTimeout(() => onClose(), 1500);
+  });
+
+  const handleRedeem = async () => {
+    const trimmed = promoCode.trim().toUpperCase();
+    if (!trimmed) return;
+    setIsRedeeming(true);
+    try {
+      await redeemCode(trimmed);
+    } finally {
+      setIsRedeeming(false);
+    }
+  };
 
   // Derive packages from offerings once, reuse in both the press handlers and the price display
   const monthlyPackage = offerings?.availablePackages.find(
@@ -87,59 +100,6 @@ export function UpgradeModal({
       setPurchaseErrorMessage(error.message || 'An error occurred during purchase');
     } finally {
       setIsProcessingPurchase(false);
-    }
-  };
-
-  const handleRedeemCoupon = async () => {
-    if (!couponCode.trim()) {
-      setCouponError('Please enter a coupon code');
-      return;
-    }
-
-    if (!onRedeemCoupon) {
-      setCouponError('Coupon redemption not available');
-      return;
-    }
-
-    setIsRedeeming(true);
-    setCouponError('');
-    setCouponSuccess('');
-
-    try {
-      const result = await onRedeemCoupon(couponCode.trim());
-      if (result.success) {
-        setCouponSuccess(result.message);
-        Toast.show({
-          type: 'success',
-          text1: 'Coupon Redeemed!',
-          text2: result.message
-        });
-
-        if (onUpgradeSuccess) {
-          onUpgradeSuccess();
-        }
-
-        setTimeout(() => {
-          onClose();
-        }, 2000);
-      } else {
-        setCouponError(result.message);
-        Toast.show({
-          type: 'error',
-          text1: 'Coupon Invalid',
-          text2: result.message
-        });
-      }
-    } catch (error: any) {
-      const errorMessage = error.message || 'Failed to redeem coupon';
-      setCouponError(errorMessage);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: errorMessage
-      });
-    } finally {
-      setIsRedeeming(false);
     }
   };
 
@@ -232,10 +192,7 @@ export function UpgradeModal({
 
               {/* Upgrade Options Header */}
               <View className="mb-4">
-                <Text className="text-lg font-semibold mb-2">Choose Your Upgrade Option</Text>
-                <Text className="text-sm text-muted-foreground">
-                  Select a subscription plan or use a coupon code below
-                </Text>
+                <Text className="text-lg font-semibold mb-2">Choose Your Plan</Text>
               </View>
               <Text className="text-xs text-muted-foreground text-center mb-3">
                 Plant Lovers' Heaven 🌿
@@ -332,53 +289,29 @@ export function UpgradeModal({
                 </View>
               )}
 
-              {/* Coupon Entry (Collapsed by default) */}
-              <View className="mb-4">
-                {!showCoupon ? (
-                  <TouchableOpacity onPress={() => setShowCoupon(true)} activeOpacity={0.7}>
-                    <View className="flex-row items-center justify-center gap-2 py-2 opacity-80">
-                      <Tag size={16} color="#3F7C4C" />
-                      <Text className="text-sm text-primary font-semibold underline">
-                        Have a coupon code?
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ) : (
-                  <Card className="border border-border bg-[#F2F6F5]" style={{ shadowOpacity: 0, elevation: 0 }}>
-                    <Text className="text-sm font-semibold mb-3">Apply Coupon</Text>
-                    <View className="flex-row gap-4">
-                      <TextInput
-                        className="flex-1 border border-border rounded-lg px-4 py-3 text-base bg-background"
-                        placeholder="ENTER CODE"
-                        value={couponCode}
-                        onChangeText={(text) => {
-                          setCouponCode(text.toUpperCase());
-                          setCouponError('');
-                          setCouponSuccess('');
-                        }}
-                        autoCapitalize="characters"
-                        editable={!isRedeeming}
-                      />
-                      <Button
-                        size="md"
-                        onPress={handleRedeemCoupon}
-                        disabled={isRedeeming || !couponCode.trim()}
-                      >
-                        {isRedeeming ? (
-                          <ActivityIndicator size="small" color="#fff" />
-                        ) : (
-                          <Text className="text-on-primary font-semibold">Apply</Text>
-                        )}
-                      </Button>
-                    </View>
-                    {couponError && (
-                      <Text className="text-xs text-destructive mt-2 text-center">{couponError}</Text>
-                    )}
-                    {couponSuccess && (
-                      <Text className="text-xs text-primary mt-2 text-center">{couponSuccess}</Text>
-                    )}
-                  </Card>
-                )}
+              {/* Promo / Offer Code */}
+              <View style={{ flexDirection: 'row', marginTop: 8, marginBottom: 16, gap: 8, paddingHorizontal: 2 }}>
+                <TextInput
+                  style={{ flex: 1, borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, backgroundColor: '#fff' }}
+                  value={promoCode}
+                  onChangeText={setPromoCode}
+                  placeholder="Have an offer code?"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  editable={!isRedeeming}
+                />
+                <TouchableOpacity
+                  style={{ backgroundColor: (!promoCode.trim() || isRedeeming) ? '#9CA3AF' : '#3F7C4C', borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center', minWidth: 80, alignItems: 'center' }}
+                  onPress={handleRedeem}
+                  disabled={!promoCode.trim() || isRedeeming}
+                  activeOpacity={0.8}
+                >
+                  {isRedeeming
+                    ? <ActivityIndicator size="small" color="#fff" />
+                    : <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>Redeem</Text>
+                  }
+                </TouchableOpacity>
               </View>
 
               {/* Payment Methods */}

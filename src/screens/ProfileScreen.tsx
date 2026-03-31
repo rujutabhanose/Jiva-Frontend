@@ -3,22 +3,14 @@ import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Header } from '../components/ui/Header';
-import { User, Mail, CreditCard, Shield, Info, LogOut, Users, Leaf } from 'lucide-react-native';
+import { User, CreditCard, Shield, Info, LogOut, Leaf, MessageCircle } from 'lucide-react-native';
 import { Switch } from '../components/ui/switch';
 import { UserData } from '../utils/storage';
-import {
-  getWeeklyTipsEnabled,
-  setWeeklyTipsEnabled,
-  scheduleWeeklyTip,
-  cancelWeeklyTip,
-  requestNotificationPermissions,
-} from '../utils/notifications';
-
+import { ChatbotModal } from '../components/ChatbotModal';
 interface ProfileScreenProps {
   isPro: boolean;
   userData?: UserData | null;
   onNavigate: (screen: string) => void;
-  onJoinBeta: () => void;
   onLogout: () => void;
   onEditPreferences?: () => void;
   onUpgrade?: () => void;
@@ -26,36 +18,9 @@ interface ProfileScreenProps {
   onDeleteAccount?: () => void;
 }
 
-export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogout, onEditPreferences, onUpgrade, onCancelSubscription, onDeleteAccount }: ProfileScreenProps) {
+export function ProfileScreen({ isPro, userData, onNavigate, onLogout, onEditPreferences, onUpgrade, onCancelSubscription, onDeleteAccount }: ProfileScreenProps) {
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
-  const [weeklyTips, setWeeklyTips] = React.useState(true);
-
-  // Load persisted weekly tips preference on mount
-  React.useEffect(() => {
-    getWeeklyTipsEnabled().then(setWeeklyTips);
-  }, []);
-
-  const handleWeeklyTipsToggle = async (enabled: boolean) => {
-    setWeeklyTips(enabled);
-    await setWeeklyTipsEnabled(enabled);
-
-    if (enabled) {
-      const granted = await requestNotificationPermissions();
-      if (granted) {
-        await scheduleWeeklyTip();
-      } else {
-        // Permission denied — revert toggle
-        setWeeklyTips(false);
-        await setWeeklyTipsEnabled(false);
-        Alert.alert(
-          'Permission Required',
-          'Please enable notifications in your device settings to receive weekly plant care tips.'
-        );
-      }
-    } else {
-      await cancelWeeklyTip();
-    }
-  };
+  const [chatbotVisible, setChatbotVisible] = React.useState(false);
 
   const handleCancelSubscription = () => {
     Alert.alert(
@@ -272,14 +237,6 @@ export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogou
                   onValueChange={setNotificationsEnabled}
                 />
               </View>
-              <View className="border-t border-border" />
-              <View className="flex flex-row items-center justify-between p-4">
-                <Text className="text-sm">Weekly Tips</Text>
-                <Switch
-                  value={weeklyTips}
-                  onValueChange={handleWeeklyTipsToggle}
-                />
-              </View>
             </Card>
           </View>
 
@@ -307,6 +264,20 @@ export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogou
             </Card>
           </View>
 
+          {/* Help & FAQ */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setChatbotVisible(true)}
+            className="w-full flex flex-row items-center gap-3 p-4 bg-[#F2F6F5] rounded-2xl border border-primary/10"
+          >
+            <MessageCircle size={20} color="#3F7C4C" strokeWidth={2} />
+            <View className="flex-1">
+              <Text className="font-medium text-sm">Help & FAQ</Text>
+              <Text className="text-xs text-muted-foreground">Get answers to common questions</Text>
+            </View>
+            <Text className="text-primary text-sm">Chat →</Text>
+          </TouchableOpacity>
+
           {/* About */}
           <Card className="bg-[#F2F6F5]" style={{ shadowOpacity: 0, elevation: 0 }}>
             <View className="flex flex-row items-center gap-3 mb-2">
@@ -324,6 +295,32 @@ export function ProfileScreen({ isPro, userData, onNavigate, onJoinBeta, onLogou
           </Card>
         </View>
       </ScrollView>
+
+      {/* Floating chatbot button — bottom-right */}
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={() => setChatbotVisible(true)}
+        style={{
+          position: 'absolute',
+          bottom: 90,
+          right: 20,
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          backgroundColor: '#3F7C4C',
+          alignItems: 'center',
+          justifyContent: 'center',
+          elevation: 6,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.2,
+          shadowRadius: 4,
+        }}
+      >
+        <MessageCircle size={26} color="#fff" />
+      </TouchableOpacity>
+
+      <ChatbotModal visible={chatbotVisible} onClose={() => setChatbotVisible(false)} />
 
       {/* Footer */}
       <View className="py-4 px-6 border-t border-border gap-1">

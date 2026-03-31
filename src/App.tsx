@@ -25,7 +25,7 @@ function AppContent() {
     isIndiaUser,
     upgradeToPro,
     cancelSubscription,
-    redeemCoupon,
+
     canScan,
     reloadUserData,
     incrementScansUsed,
@@ -49,7 +49,7 @@ function AppContent() {
       deleteScan={deleteScan}
       upgradeToPro={upgradeToPro}
       cancelSubscription={cancelSubscription}
-      redeemCoupon={redeemCoupon}
+
       reloadUserData={reloadUserData}
       incrementScansUsed={incrementScansUsed}
     />

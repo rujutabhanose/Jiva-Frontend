@@ -4,6 +4,10 @@
 // Local model inference is disabled - app will use backend inference
 import * as ImageManipulator from 'expo-image-manipulator';
 
+// Stub type declarations for uninstalled TF/TFLite packages
+declare const tf: any;
+declare const tflite: any;
+
 interface ModelPrediction {
   disease: number[];
   nutrient: number[];
@@ -53,13 +57,13 @@ class TFLiteInference {
     imageUri: string,
     width: number = 224,
     height: number = 224
-  ): Promise<tf.Tensor3D> {
+  ): Promise<any> {
     try {
       // Resize image
       const manipulationResult = await ImageManipulator.manipulateAsync(
         imageUri,
         [{ resize: { width, height } }],
-        { compress: 1, format: 'jpeg' }
+        { compress: 1, format: ImageManipulator.SaveFormat.JPEG }
       );
 
       // Convert to tensor
@@ -71,7 +75,7 @@ class TFLiteInference {
       const normalized = imageTensor
         .div(255.0)
         .sub([0.485, 0.456, 0.406])
-        .div([0.229, 0.224, 0.225]) as tf.Tensor3D;
+        .div([0.229, 0.224, 0.225]) as any;
 
       return normalized;
     } catch (error) {
@@ -93,7 +97,7 @@ class TFLiteInference {
 
       // Preprocess
       const imageTensor = await this.preprocessImage(imageUri);
-      const batchedTensor = imageTensor.expandDims(0) as tf.Tensor4D;
+      const batchedTensor = imageTensor.expandDims(0) as any;
 
       // Run inference
       const predictions = await this.model.predict(batchedTensor);

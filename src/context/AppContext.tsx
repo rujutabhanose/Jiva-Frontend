@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
+import { API_ENDPOINTS, API_BASE_URL, REVENUECAT_DEV_MODE } from '../config/api';
 import { storage } from '../utils/storage';
+import Purchases from 'react-native-purchases';
 
 interface Scan {
   id: string;
@@ -39,7 +40,7 @@ interface AppContextType {
   deleteScan: (scanId: string) => Promise<void>;
   upgradeToPro: () => Promise<{ success: boolean; message: string }>;
   cancelSubscription: () => Promise<{ success: boolean; message: string }>;
-  redeemCoupon: (couponCode: string) => Promise<{ success: boolean; message: string }>;
+
   canScan: boolean;
   clearUserHistory: () => Promise<void>; // Clear history when switching users
   reloadUserData: () => Promise<void>; // Reload user data after login
@@ -256,6 +257,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
 
     initializeUser();
+  }, []);
+
+  // Global RevenueCat listener — catches entitlement changes from offer code redemptions
+  // and normal purchases made outside the app (e.g. App Store / Play Store)
+  useEffect(() => {
+    if (REVENUECAT_DEV_MODE) return;
+
+    const onCustomerInfoUpdated = (customerInfo: any) => {
+      const isProNow = customerInfo.entitlements.active['pro'] !== undefined;
+      console.log('[AppContext] CustomerInfo updated, isPro:', isProNow);
+      setIsPro(isProNow);
+      AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, isProNow ? 'true' : 'false').catch(() => {});
+    };
+
+    Purchases.addCustomerInfoUpdateListener(onCustomerInfoUpdated);
+
+    return () => { Purchases.removeCustomerInfoUpdateListener(onCustomerInfoUpdated); };
   }, []);
 
   const saveScan = async (scan: Scan, backendMeta?: any) => {
@@ -749,93 +767,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const redeemCoupon = async (couponCode: string): Promise<{ success: boolean; message: string }> => {
-    try {
-      // Get authentication token
-      const { storage } = await import('../utils/storage');
-      const token = await storage.getToken();
-
-      if (!token) {
-        return {
-          success: false,
-          message: 'Please log in to redeem coupon codes',
-        };
-      }
-
-      const response = await fetch(API_ENDPOINTS.REDEEM_COUPON, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          coupon_code: couponCode,
-        }),
-      });
-
-      let data: any;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        // If JSON parsing fails, return a user-friendly error
-        return {
-          success: false,
-          message: response.ok 
-            ? 'Invalid response from server. Please try again.'
-            : `Server error (${response.status}). Please try again later.`,
-        };
-      }
-
-      if (!response.ok) {
-        // Special case: if user is already premium, update local state to match backend
-        const errorMessage = data.detail || data.message || '';
-        if (errorMessage.toLowerCase().includes('already premium')) {
-          setIsPro(true);
-          await AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, 'true');
-        }
-
-        return {
-          success: false,
-          message: errorMessage || `Failed to redeem coupon (${response.status})`,
-        };
-      }
-
-      // Validate response structure
-      if (!data || typeof data !== 'object') {
-        return {
-          success: false,
-          message: 'Invalid response from server. Please try again.',
-        };
-      }
-
-      // Update local state
-      setIsPro(true);
-      await AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, 'true');
-
-      return {
-        success: true,
-        message: data.message || 'Coupon redeemed successfully!',
-      };
-    } catch (error: any) {
-      console.error('Error redeeming coupon:', error);
-      
-      // Categorize error for user-friendly message
-      let errorMessage = 'Failed to redeem coupon';
-      
-      if (error.message?.includes('fetch') || error.message?.includes('network')) {
-        errorMessage = 'Network error. Please check your connection and try again.';
-      } else if (error.message?.includes('timeout')) {
-        errorMessage = 'Request timed out. Please try again.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      return {
-        success: false,
-        message: errorMessage,
-      };
-    }
-  };
 
   const clearUserHistory = async () => {
     // Clear history state
@@ -991,7 +922,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         deleteScan,
         upgradeToPro,
         cancelSubscription,
-        redeemCoupon,
+
         canScan,
         clearUserHistory,
         reloadUserData,

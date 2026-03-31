@@ -15,7 +15,6 @@ interface MainNavigatorProps {
   userData?: any;
   onNavigate: (screen: AppScreen | MainTabScreen | string) => void;
   onSelectScan: (scan: any) => void;
-  onJoinBeta: () => void;
   onLogout: () => void;
   onUpgrade?: () => void;
   onCancelSubscription?: () => void;
@@ -32,7 +31,6 @@ export function MainNavigator({
   userData,
   onNavigate,
   onSelectScan,
-  onJoinBeta,
   onLogout,
   onUpgrade,
   onCancelSubscription,
@@ -100,7 +98,6 @@ export function MainNavigator({
             isPro={isPro}
             userData={userData}
             onNavigate={handleNavigate}
-            onJoinBeta={onJoinBeta}
             onLogout={onLogout}
             onEditPreferences={handleEditPreferences}
             onUpgrade={handleUpgrade}

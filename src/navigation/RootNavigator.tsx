@@ -1,7 +1,6 @@
 // src/navigation/RootNavigator.tsx
 import React from "react";
 import { View, Modal, BackHandler } from "react-native";
-import { useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import { SplashScreen } from "../screens/SplashScreen";
@@ -24,7 +23,6 @@ import { PrivacyPolicyScreen } from "../screens/PrivacyPolicyScreen";
 import { OfflineScreen } from "../screens/OfflineScreen";
 import { ErrorScreen } from "../screens/ErrorScreen";
 import { UpgradeModal } from "../components/UpgradeModal";
-import { CameraPermissionModal } from "../components/CameraPermissionModal";
 import { RootNavigationState, AppScreen, MainTabScreen } from "./types";
 import Toast from "react-native-toast-message";
 import { storage, UserType, PlantType } from "../utils/storage";
@@ -45,7 +43,7 @@ interface RootNavigatorProps {
   deleteScan: (scanId: string) => Promise<void>;
   upgradeToPro: () => Promise<{ success: boolean; message: string }>;
   cancelSubscription: () => Promise<{ success: boolean; message: string }>;
-  redeemCoupon: (couponCode: string) => Promise<{ success: boolean; message: string }>;
+
   reloadUserData: () => Promise<void>;
   incrementScansUsed: () => Promise<void>;
 }
@@ -65,12 +63,11 @@ export function RootNavigator({
   deleteScan,
   upgradeToPro,
   cancelSubscription,
-  redeemCoupon,
+
   reloadUserData,
   incrementScansUsed,
 }: RootNavigatorProps) {
   console.log('[RootNavigator] Rendering with userId:', userId);
-  const [cameraPermission] = useCameraPermissions();
   const [rootState, setRootState] = React.useState<RootNavigationState>('splash');
   const [modalScreen, setModalScreen] = React.useState<AppScreen | null>(null);
   const [activeTab, setActiveTab] = React.useState<MainTabScreen>('home');
@@ -121,7 +118,6 @@ export function RootNavigator({
   const [hasError, setHasError] = React.useState(false);
   const [userData, setUserData] = React.useState<any>(null);
   const [showUpgradeModal, setShowUpgradeModal] = React.useState(false);
-  const [showCameraPermissionModal, setShowCameraPermissionModal] = React.useState(false);
   const [plantIdentificationResult, setPlantIdentificationResult] = React.useState<PlantIdentificationResult | null>(null);
   const [diagnosisResult, setDiagnosisResult] = React.useState<DiagnosisResult | null>(null);
   const [pendingIdentificationScan, setPendingIdentificationScan] = React.useState<any | null>(null);
@@ -309,16 +305,7 @@ export function RootNavigator({
       console.log('[handleScanStart] Showing upgrade modal - scan limit reached');
       setShowUpgradeModal(true);
     } else {
-      // Check if camera permission is already granted
-      if (cameraPermission?.granted) {
-        // Permission already granted, go directly to camera
-        console.log('[handleScanStart] Opening camera directly');
-        setModalScreen('camera');
-      } else {
-        // Need to request permission, show modal
-        console.log('[handleScanStart] Showing permission modal');
-        setShowCameraPermissionModal(true);
-      }
+      setModalScreen('camera');
     }
   };
 
@@ -529,7 +516,6 @@ export function RootNavigator({
           userData={userData}
           onNavigate={handleNavigate}
           onSelectScan={handleViewHistory}
-          onJoinBeta={() => Toast.show({ type: 'success', text1: 'Beta program functionality coming soon' })}
           onLogout={handleLogout}
           onUpgrade={() => !isIndiaUser && setShowUpgradeModal(true)}
           onCancelSubscription={handleCancelSubscription}
@@ -717,7 +703,6 @@ export function RootNavigator({
       {modalScreen === 'scan-limit' && (
         <ScanLimitScreen
           onUpgrade={() => Toast.show({ type: 'success', text1: 'Upgrade functionality coming soon' })}
-          onJoinBeta={() => Toast.show({ type: 'success', text1: 'Beta program functionality coming soon' })}
           onBack={handleBackToMain}
         />
       )}
@@ -798,7 +783,7 @@ export function RootNavigator({
         visible={showUpgradeModal && !isIndiaUser}
         onClose={() => setShowUpgradeModal(false)}
         onSelectPlan={handleSelectPlan}
-        onRedeemCoupon={redeemCoupon}
+
         onUpgradeSuccess={async () => {
           // Refresh user data after successful purchase
           await reloadUserData();
@@ -816,19 +801,6 @@ export function RootNavigator({
         scansLimit={scansLimit}
       />
 
-      {/* Camera Permission Modal */}
-      <CameraPermissionModal
-        visible={showCameraPermissionModal}
-        onClose={() => setShowCameraPermissionModal(false)}
-        onGranted={() => {
-          setShowCameraPermissionModal(false);
-          setModalScreen('camera');
-        }}
-        onDenied={() => {
-          setShowCameraPermissionModal(false);
-          setModalScreen('scan-start');
-        }}
-      />
     </>
   );
 }
