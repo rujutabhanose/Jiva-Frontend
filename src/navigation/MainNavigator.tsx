@@ -11,6 +11,8 @@ interface MainNavigatorProps {
   scansUsed: number;
   scansLimit: number;
   isPro: boolean;
+  isIndiaUser?: boolean;
+  indiaFreeExpiresAt?: string | null;
   history: any[];
   userData?: any;
   onNavigate: (screen: AppScreen | MainTabScreen | string) => void;
@@ -27,6 +29,8 @@ export function MainNavigator({
   scansUsed,
   scansLimit,
   isPro,
+  isIndiaUser,
+  indiaFreeExpiresAt,
   history,
   userData,
   onNavigate,
@@ -96,6 +100,8 @@ export function MainNavigator({
         {activeTab === 'profile' && (
           <ProfileScreen
             isPro={isPro}
+            isIndiaUser={isIndiaUser}
+            indiaFreeExpiresAt={indiaFreeExpiresAt}
             userData={userData}
             onNavigate={handleNavigate}
             onLogout={onLogout}

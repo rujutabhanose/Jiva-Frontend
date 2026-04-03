@@ -3,7 +3,6 @@ import { View, Text, Modal, TouchableOpacity, Pressable, ScrollView, ActivityInd
 import { Card } from './ui/Card';
 import { X, Check, Zap, Shield, AlertCircle } from 'lucide-react-native';
 import { usePurchases } from '../hooks/usePurchases';
-import { usePromoCodeRedemption } from '../hooks/usePromoCodeRedemption';
 import { PurchasesPackage } from 'react-native-purchases';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -29,27 +28,7 @@ export function UpgradeModal({
   const { offerings, purchasePackage, isLoading: isPurchasing, error: purchaseError, retryFetchOfferings } = usePurchases();
   const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
   const [purchaseErrorMessage, setPurchaseErrorMessage] = useState<string | null>(null);
-  const [promoCode, setPromoCode] = useState('');
-  const [isRedeeming, setIsRedeeming] = useState(false);
 
-  const { redeemCode } = usePromoCodeRedemption((_customerInfo) => {
-    Alert.alert('Pro Activated!', 'You now have free pro access.');
-    if (onUpgradeSuccess) {
-      onUpgradeSuccess();
-    }
-    setTimeout(() => onClose(), 1500);
-  });
-
-  const handleRedeem = async () => {
-    const trimmed = promoCode.trim().toUpperCase();
-    if (!trimmed) return;
-    setIsRedeeming(true);
-    try {
-      await redeemCode(trimmed);
-    } finally {
-      setIsRedeeming(false);
-    }
-  };
 
   // Derive packages from offerings once, reuse in both the press handlers and the price display
   const monthlyPackage = offerings?.availablePackages.find(
@@ -288,31 +267,6 @@ export function UpgradeModal({
                   </Pressable>
                 </View>
               )}
-
-              {/* Promo / Offer Code */}
-              <View style={{ flexDirection: 'row', marginTop: 8, marginBottom: 16, gap: 8, paddingHorizontal: 2 }}>
-                <TextInput
-                  style={{ flex: 1, borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, backgroundColor: '#fff' }}
-                  value={promoCode}
-                  onChangeText={setPromoCode}
-                  placeholder="Have an offer code?"
-                  placeholderTextColor="#9CA3AF"
-                  autoCapitalize="characters"
-                  autoCorrect={false}
-                  editable={!isRedeeming}
-                />
-                <TouchableOpacity
-                  style={{ backgroundColor: (!promoCode.trim() || isRedeeming) ? '#9CA3AF' : '#3F7C4C', borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center', minWidth: 80, alignItems: 'center' }}
-                  onPress={handleRedeem}
-                  disabled={!promoCode.trim() || isRedeeming}
-                  activeOpacity={0.8}
-                >
-                  {isRedeeming
-                    ? <ActivityIndicator size="small" color="#fff" />
-                    : <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>Redeem</Text>
-                  }
-                </TouchableOpacity>
-              </View>
 
               {/* Payment Methods */}
               <View className="py-4 border-t border-border">

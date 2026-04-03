@@ -112,7 +112,7 @@ const FAQS: FAQ[] = [
     question: 'How do I upgrade to Pro?',
     keywords: ['upgrade', 'buy', 'purchase', 'subscribe', 'pay'],
     answer:
-      'Go to Profile → Subscription and tap "Upgrade to Pro". You can also use a coupon code if you have one.',
+      'Go to Profile → Subscription and tap "Upgrade to Pro".',
   },
   {
     question: 'How do I cancel my subscription?',

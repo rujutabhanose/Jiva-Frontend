@@ -23,6 +23,7 @@ function AppContent() {
     deleteScan,
     isPro,
     isIndiaUser,
+    indiaFreeExpiresAt,
     upgradeToPro,
     cancelSubscription,
 
@@ -40,6 +41,7 @@ function AppContent() {
       scansLimit={scansLimit}
       isPro={isPro}
       isIndiaUser={isIndiaUser}
+      indiaFreeExpiresAt={indiaFreeExpiresAt}
       canScan={canScan}
       history={history}
       currentScan={currentScan}

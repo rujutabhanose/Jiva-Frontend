@@ -1,6 +1,6 @@
 // src/navigation/AuthNavigator.tsx
 import React from "react";
-import { Platform, BackHandler } from "react-native";
+import { Platform, BackHandler, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WelcomeScreen } from "../screens/WelcomeScreen";
 import { SignInScreen } from "../screens/SignInScreen";
@@ -166,6 +166,21 @@ export function AuthNavigator({ onAuthenticated }: AuthNavigatorProps) {
         text2: `Welcome, ${name}!`,
         visibilityTime: 3000,
       });
+
+      // If user is an India user, show free trial popup before onboarding
+      if (authResponse.user.indiaFreeExpiresAt) {
+        const expiryDate = new Date(authResponse.user.indiaFreeExpiresAt);
+        const formattedDate = expiryDate.toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        });
+        Alert.alert(
+          '🎉 6-Month Free Trial Activated!',
+          `Welcome to Jiva Plants! As a user in India, you get full access to all features — including unlimited plant diagnosis — completely free for 6 months.\n\nYour trial is valid until ${formattedDate}. No payment needed during this period.`,
+          [{ text: 'Get Started', style: 'default' }]
+        );
+      }
 
       // Navigate directly to onboarding screen
       setCurrentScreen('onboarding');

@@ -4,6 +4,26 @@ import { API_ENDPOINTS, API_BASE_URL, REVENUECAT_DEV_MODE } from '../config/api'
 import { storage } from '../utils/storage';
 import Purchases from 'react-native-purchases';
 
+/** Refresh the access token and return the new one, or null on failure */
+async function refreshAccessToken(): Promise<string | null> {
+  try {
+    const refreshToken = await storage.getRefreshToken();
+    if (!refreshToken) return null;
+    const resp = await fetch(API_ENDPOINTS.REFRESH, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    if (!resp.ok) return null;
+    const tokens = await resp.json();
+    await storage.setToken(tokens.access_token);
+    await storage.setRefreshToken(tokens.refresh_token);
+    return tokens.access_token;
+  } catch {
+    return null;
+  }
+}
+
 interface Scan {
   id: string;
   image: string;
@@ -32,6 +52,7 @@ interface AppContextType {
   scansLimit: number;
   isPro: boolean;
   isIndiaUser: boolean;
+  indiaFreeExpiresAt: string | null;
   history: Scan[];
   currentScan: Scan | null;
   saveScan: (scan: Scan, backendMeta?: any) => Promise<void>;
@@ -138,8 +159,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
             // Update local storage with backend data
             await AsyncStorage.setItem(STORAGE_KEYS.SCANS_USED, (data.scans_used || 0).toString());
             await AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, data.is_premium ? 'true' : 'false');
+          } else if (response.status === 401) {
+            // Access token expired — try a silent refresh then retry the profile fetch
+            console.warn('[AppContext] 401 on profile fetch, attempting token refresh');
+            const newToken = await refreshAccessToken();
+            if (newToken) {
+              const retryController = new AbortController();
+              const retryTimeout = setTimeout(() => retryController.abort(), 5000);
+              const retryResponse = await fetch(API_ENDPOINTS.PROFILE, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${newToken}` },
+                signal: retryController.signal,
+              });
+              clearTimeout(retryTimeout);
+              if (retryResponse.ok) {
+                const data = await retryResponse.json();
+                setScansUsed(data.scans_used || 0);
+                setIsPro(data.is_premium || false);
+                setIndiaFreeExpiresAt(data.india_free_expires_at || null);
+                await AsyncStorage.setItem(STORAGE_KEYS.SCANS_USED, (data.scans_used || 0).toString());
+                await AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, data.is_premium ? 'true' : 'false');
+              }
+            } else {
+              // Both tokens expired — fall back to local storage (RootNavigator handles redirect)
+              console.warn('[AppContext] Token refresh failed, using local storage');
+              const storedScansUsed = await AsyncStorage.getItem(STORAGE_KEYS.SCANS_USED);
+              const storedIsPro = await AsyncStorage.getItem(STORAGE_KEYS.IS_PRO);
+              setScansUsed(storedScansUsed ? parseInt(storedScansUsed, 10) : 0);
+              setIsPro(storedIsPro === 'true');
+            }
           } else {
-            // If profile fetch fails (e.g., 401), fall back to local storage
+            // Other non-200 — fall back to local storage
             console.warn('[AppContext] Profile fetch failed, using local storage');
             const storedScansUsed = await AsyncStorage.getItem(STORAGE_KEYS.SCANS_USED);
             const storedIsPro = await AsyncStorage.getItem(STORAGE_KEYS.IS_PRO);
@@ -914,6 +964,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         scansLimit,
         isPro,
         isIndiaUser,
+        indiaFreeExpiresAt,
         history,
         currentScan,
         saveScan,

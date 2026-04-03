@@ -1,9 +1,7 @@
-import { Linking, AppState, Platform } from 'react-native';
+import { AppState, Platform, Linking } from 'react-native';
 import Purchases, { CustomerInfo } from 'react-native-purchases';
 import { useEffect, useRef, useCallback } from 'react';
 import { REVENUECAT_DEV_MODE } from '../config/api';
-
-const APPLE_APP_ID = '6759003923';
 
 export function usePromoCodeRedemption(onProAccessGranted?: (customerInfo: CustomerInfo) => void) {
   const didOpenForRedemption = useRef(false);
@@ -30,15 +28,16 @@ export function usePromoCodeRedemption(onProAccessGranted?: (customerInfo: Custo
     return () => subscription.remove();
   }, [onProAccessGranted]);
 
-  const redeemCode = useCallback(async (code: string) => {
-    didOpenForRedemption.current = true;
-
+  const redeemCode = useCallback(async (code?: string) => {
     if (Platform.OS === 'ios') {
-      const url = `https://apps.apple.com/redeem?ctx=offercodes&id=${APPLE_APP_ID}&code=${encodeURIComponent(code)}`;
-      await Linking.openURL(url);
-    } else {
+      didOpenForRedemption.current = true;
+      await Purchases.presentCodeRedemptionSheet();
+    } else if (code) {
+      didOpenForRedemption.current = true;
       const url = `https://play.google.com/redeem?code=${encodeURIComponent(code)}`;
       await Linking.openURL(url);
+    } else {
+      console.warn('[PromoCode] Android redemption requires a code.');
     }
   }, []);
 

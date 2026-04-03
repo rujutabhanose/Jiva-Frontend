@@ -35,6 +35,7 @@ export interface UserData {
   plantTypes?: string[];
   isPremium: boolean;
   freeScansLeft: number;
+  indiaFreeExpiresAt?: string | null;
 }
 
 export interface AuthResponse {

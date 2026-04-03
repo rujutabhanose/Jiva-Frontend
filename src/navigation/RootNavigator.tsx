@@ -27,6 +27,36 @@ import { RootNavigationState, AppScreen, MainTabScreen } from "./types";
 import Toast from "react-native-toast-message";
 import { storage, UserType, PlantType } from "../utils/storage";
 import { PlantIdentificationResult, DiagnosisResult, deleteAccount, updateUserProfile } from "../services/api";
+import { API_ENDPOINTS } from "../config/api";
+
+/** Decode JWT exp claim without a library — no signature verification needed client-side */
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return !payload.exp || Date.now() >= payload.exp * 1000;
+  } catch {
+    return true;
+  }
+}
+
+async function tryRefreshTokens(): Promise<boolean> {
+  try {
+    const refreshToken = await storage.getRefreshToken();
+    if (!refreshToken || isTokenExpired(refreshToken)) return false;
+    const resp = await fetch(API_ENDPOINTS.REFRESH, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    if (!resp.ok) return false;
+    const tokens = await resp.json();
+    await storage.setToken(tokens.access_token);
+    await storage.setRefreshToken(tokens.refresh_token);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 interface RootNavigatorProps {
   userId: string;
@@ -34,6 +64,7 @@ interface RootNavigatorProps {
   scansLimit: number;
   isPro: boolean;
   isIndiaUser: boolean;
+  indiaFreeExpiresAt: string | null;
   canScan: boolean;
   history: any[];
   currentScan: any | null;
@@ -54,6 +85,7 @@ export function RootNavigator({
   scansLimit,
   isPro,
   isIndiaUser,
+  indiaFreeExpiresAt,
   canScan,
   history,
   currentScan,
@@ -157,20 +189,36 @@ export function RootNavigator({
   // Navigation handlers
   const handleSplashComplete = async () => {
     try {
-      // Check if user has a valid authentication token
-      const isAuthenticated = await storage.isAuthenticated();
+      const accessToken = await storage.getToken();
+      const refreshToken = await storage.getRefreshToken();
 
-      if (isAuthenticated) {
-        // User has token, navigate to main app (Home)
-        setActiveTab('home'); // Always start on home screen
-        setRootState('main');
-      } else {
-        // No token, navigate to auth screen
+      // No tokens at all — must log in
+      if (!accessToken && !refreshToken) {
         setRootState('auth');
+        return;
       }
+
+      // Access token still valid — go straight to main
+      if (accessToken && !isTokenExpired(accessToken)) {
+        setActiveTab('home');
+        setRootState('main');
+        return;
+      }
+
+      // Access token expired — try to silently refresh before entering the app
+      const refreshed = await tryRefreshTokens();
+      if (refreshed) {
+        console.log('[RootNavigator] Token refreshed on startup');
+        setActiveTab('home');
+        setRootState('main');
+        return;
+      }
+
+      // Refresh failed (both tokens expired) — clear stale tokens and send to login
+      await storage.clearAll();
+      setRootState('auth');
     } catch (error) {
       console.error('Error checking authentication:', error);
-      // On error, default to auth screen
       setRootState('auth');
     }
   };
@@ -512,6 +560,8 @@ export function RootNavigator({
           scansUsed={scansUsed}
           scansLimit={scansLimit}
           isPro={isPro}
+          isIndiaUser={isIndiaUser}
+          indiaFreeExpiresAt={indiaFreeExpiresAt}
           history={history}
           userData={userData}
           onNavigate={handleNavigate}

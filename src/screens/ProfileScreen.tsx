@@ -9,6 +9,8 @@ import { UserData } from '../utils/storage';
 import { ChatbotModal } from '../components/ChatbotModal';
 interface ProfileScreenProps {
   isPro: boolean;
+  isIndiaUser?: boolean;
+  indiaFreeExpiresAt?: string | null;
   userData?: UserData | null;
   onNavigate: (screen: string) => void;
   onLogout: () => void;
@@ -18,7 +20,7 @@ interface ProfileScreenProps {
   onDeleteAccount?: () => void;
 }
 
-export function ProfileScreen({ isPro, userData, onNavigate, onLogout, onEditPreferences, onUpgrade, onCancelSubscription, onDeleteAccount }: ProfileScreenProps) {
+export function ProfileScreen({ isPro, isIndiaUser, indiaFreeExpiresAt, userData, onNavigate, onLogout, onEditPreferences, onUpgrade, onCancelSubscription, onDeleteAccount }: ProfileScreenProps) {
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
   const [chatbotVisible, setChatbotVisible] = React.useState(false);
 
@@ -202,6 +204,22 @@ export function ProfileScreen({ isPro, userData, onNavigate, onLogout, onEditPre
                       Cancel Subscription
                     </Text>
                   </TouchableOpacity>
+                </>
+              ) : isIndiaUser ? (
+                <>
+                  <Text className="text-sm text-muted-foreground mb-2">
+                    You have free access to all features as part of our India launch offer.
+                  </Text>
+                  {indiaFreeExpiresAt && (
+                    <Text className="text-xs text-primary font-medium mt-1">
+                      Free trial valid until{' '}
+                      {new Date(indiaFreeExpiresAt).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </Text>
+                  )}
                 </>
               ) : (
                 <>
