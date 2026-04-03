@@ -3,6 +3,7 @@ import { View, Text, Modal, TouchableOpacity, Pressable, ScrollView, ActivityInd
 import { Card } from './ui/Card';
 import { X, Check, Zap, Shield, AlertCircle } from 'lucide-react-native';
 import { usePurchases } from '../hooks/usePurchases';
+import { usePromoCodeRedemption } from '../hooks/usePromoCodeRedemption';
 import { PurchasesPackage } from 'react-native-purchases';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -28,6 +29,10 @@ export function UpgradeModal({
   const { offerings, purchasePackage, isLoading: isPurchasing, error: purchaseError, retryFetchOfferings } = usePurchases();
   const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
   const [purchaseErrorMessage, setPurchaseErrorMessage] = useState<string | null>(null);
+  const { redeemCode } = usePromoCodeRedemption((_customerInfo) => {
+    if (onUpgradeSuccess) onUpgradeSuccess();
+    setTimeout(() => onClose(), 1500);
+  });
 
 
   // Derive packages from offerings once, reuse in both the press handlers and the price display
@@ -296,6 +301,15 @@ export function UpgradeModal({
                   Continue with limited access
                 </Text>
               </TouchableOpacity>
+
+              {/* iOS-only offer code redemption */}
+              {Platform.OS === 'ios' && (
+                <TouchableOpacity onPress={() => redeemCode()} style={{ marginTop: 8 }} activeOpacity={0.7}>
+                  <Text style={{ textAlign: 'center', color: '#4A7C59', fontSize: 14, textDecorationLine: 'underline' }}>
+                    Redeem Offer Code
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               {/* Subscription legal footer — required by App Store & Play Store */}
               <View style={{ marginTop: 16, alignItems: 'center' }}>
