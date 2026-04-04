@@ -1,6 +1,6 @@
 // src/screens/SplashScreen.tsx
 import { useEffect, useState, useRef } from "react";
-import { View, Text, Animated, Easing, ActivityIndicator, Image } from "react-native";
+import { View, Text, Animated, Easing, ActivityIndicator, Image, Platform } from "react-native";
 import { Leaf } from "lucide-react-native";
 import { LinearGradient } from 'expo-linear-gradient';
 import funFactsData from "../../assets/funfacts.json";
@@ -87,7 +87,7 @@ export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps)
           <View className="relative items-center justify-center">
             {/* App Icon */}
             <Image
-              source={require("../../assets/icon.png")}
+              source={Platform.OS === 'android' ? require("../../assets/icon-android.png") : require("../../assets/icon.png")}
               style={{ width: 128, height: 128, borderRadius: 64 }}
               resizeMode="contain"
             />

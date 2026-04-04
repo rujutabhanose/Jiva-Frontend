@@ -8,6 +8,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Linking,
 } from 'react-native';
 import { X, Send, MessageCircle } from 'lucide-react-native';
 
@@ -184,6 +185,29 @@ const GREETING: Message = {
   isBot: true,
 };
 
+const EMAIL_REGEX = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/;
+
+function BotMessageText({ text }: { text: string }) {
+  const parts = text.split(EMAIL_REGEX);
+  return (
+    <Text className="text-sm leading-5 text-foreground">
+      {parts.map((part, i) =>
+        EMAIL_REGEX.test(part) ? (
+          <Text
+            key={i}
+            className="text-primary underline"
+            onPress={() => Linking.openURL(`mailto:${part}`)}
+          >
+            {part}
+          </Text>
+        ) : (
+          <Text key={i}>{part}</Text>
+        )
+      )}
+    </Text>
+  );
+}
+
 function findAnswer(input: string): string {
   const lower = input.toLowerCase();
   for (const faq of FAQS) {
@@ -275,13 +299,11 @@ export function ChatbotModal({ visible, onClose }: ChatbotModalProps) {
                       : 'bg-primary rounded-tr-sm'
                   }`}
                 >
-                  <Text
-                    className={`text-sm leading-5 ${
-                      msg.isBot ? 'text-foreground' : 'text-white'
-                    }`}
-                  >
-                    {msg.text}
-                  </Text>
+                  {msg.isBot ? (
+                    <BotMessageText text={msg.text} />
+                  ) : (
+                    <Text className="text-sm leading-5 text-white">{msg.text}</Text>
+                  )}
                 </View>
               </View>
             ))}
