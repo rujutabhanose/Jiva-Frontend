@@ -75,6 +75,10 @@ export const API_ENDPOINTS = {
   DELETE_SCAN: (scanId: number) => `${API_BASE_URL}/api/v1/scans/${scanId}`,
   GET_SCAN_STATS: `${API_BASE_URL}/api/v1/scans/stats/summary`,
 
+  // Coupon endpoints
+  VALIDATE_COUPON: `${API_BASE_URL}/api/v1/coupons/validate`,
+  REDEEM_COUPON: `${API_BASE_URL}/api/v1/coupons/redeem`,
+
   // Feedback endpoints
   SUBMIT_DIAGNOSIS_FEEDBACK: `${API_BASE_URL}/api/v1/feedback/diagnosis`,
 };

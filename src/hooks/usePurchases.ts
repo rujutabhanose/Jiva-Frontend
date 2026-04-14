@@ -3,6 +3,7 @@ import Purchases, {
   PurchasesOffering,
   PurchasesPackage,
   CustomerInfo,
+  SubscriptionOption,
   PURCHASES_ERROR_CODE
 } from 'react-native-purchases';
 import { API_ENDPOINTS, REVENUECAT_API_KEY, REVENUECAT_DEV_MODE } from '../config/api';
@@ -13,6 +14,7 @@ interface UsePurchasesReturn {
   isLoading: boolean;
   error: string | null;
   purchasePackage: (pkg: PurchasesPackage, deviceId?: string) => Promise<{ success: boolean; message: string }>;
+  purchaseSubscriptionOption: (option: SubscriptionOption) => Promise<{ success: boolean; message: string }>;
   restorePurchases: (deviceId?: string) => Promise<{ success: boolean; message: string }>;
   retryFetchOfferings: () => Promise<void>;
   isPro: boolean;
@@ -371,12 +373,55 @@ export function usePurchases(): UsePurchasesReturn {
     }
   }, []);
 
+  const purchaseSubscriptionOption = useCallback(async (
+    option: SubscriptionOption
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const { customerInfo } = await Purchases.purchaseSubscriptionOption(option);
+      const hasPro = customerInfo.entitlements.active['pro'] !== undefined;
+
+      if (hasPro) {
+        setIsPro(true);
+        setCustomerInfo(customerInfo);
+
+        try {
+          const { storage } = await import('../utils/storage');
+          const token = await storage.getToken();
+          if (token) {
+            await fetch(API_ENDPOINTS.UPGRADE_TO_PRO, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ plan: 'yearly' }),
+            });
+          }
+        } catch (backendError) {
+          console.error('[RevenueCat] Error syncing to backend after offer purchase:', backendError);
+        }
+
+        return { success: true, message: 'Purchase successful! You now have Pro access.' };
+      }
+
+      return { success: false, message: 'Purchase completed but Pro entitlement not found.' };
+    } catch (err: any) {
+      if (err.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
+        return { success: false, message: 'Purchase was cancelled.' };
+      }
+      return { success: false, message: err.message || 'Failed to complete purchase. Please try again.' };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return {
     offerings,
     customerInfo,
     isLoading,
     error,
     purchasePackage,
+    purchaseSubscriptionOption,
     restorePurchases,
     retryFetchOfferings,
     isPro,

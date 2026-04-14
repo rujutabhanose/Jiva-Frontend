@@ -161,7 +161,7 @@ const FAQS: FAQ[] = [
     question: 'How do I contact support?',
     keywords: ['contact', 'support', 'help', 'email', 'reach'],
     answer:
-      'You can reach our support team at support@jivaplants.com. We typically respond within 24–48 hours.',
+      'You can reach our support team at jivaplantssupport@gmail.com. We typically respond within 24–48 hours.',
   },
 ];
 
@@ -215,7 +215,7 @@ function findAnswer(input: string): string {
       return faq.answer;
     }
   }
-  return "I'm not sure about that. You can email us at support@jivaplants.com for more help, or try rephrasing your question.";
+  return "I'm not sure about that. You can email us at jivaplantssupport@gmail.com for more help, or try rephrasing your question.";
 }
 
 interface ChatbotModalProps {

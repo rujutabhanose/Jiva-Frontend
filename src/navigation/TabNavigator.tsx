@@ -1,6 +1,7 @@
 // src/navigation/TabNavigator.tsx
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Home, History, User } from "lucide-react-native";
 import { MainTabScreen } from "./types";
 
@@ -10,6 +11,7 @@ interface TabNavigatorProps {
 }
 
 export function TabNavigator({ activeTab, onTabChange }: TabNavigatorProps) {
+  const insets = useSafeAreaInsets();
   const tabs: Array<{
     id: MainTabScreen;
     label: string;
@@ -21,7 +23,7 @@ export function TabNavigator({ activeTab, onTabChange }: TabNavigatorProps) {
   ];
 
   return (
-    <View className="absolute bottom-0 left-0 right-0 bg-surface border-t border-border">
+    <View className="absolute bottom-0 left-0 right-0 bg-surface border-t border-border" style={{ paddingBottom: insets.bottom }}>
       <View className="flex flex-row items-center justify-around max-w-md mx-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;

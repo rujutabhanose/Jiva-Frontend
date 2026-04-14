@@ -32,12 +32,12 @@ export function usePromoCodeRedemption(onProAccessGranted?: (customerInfo: Custo
     if (Platform.OS === 'ios') {
       didOpenForRedemption.current = true;
       await Purchases.presentCodeRedemptionSheet();
-    } else if (code) {
-      didOpenForRedemption.current = true;
-      const url = `https://play.google.com/redeem?code=${encodeURIComponent(code)}`;
-      await Linking.openURL(url);
     } else {
-      console.warn('[PromoCode] Android redemption requires a code.');
+      didOpenForRedemption.current = true;
+      const url = code
+        ? `https://play.google.com/redeem?code=${encodeURIComponent(code)}`
+        : 'https://play.google.com/redeem';
+      await Linking.openURL(url);
     }
   }, []);
 

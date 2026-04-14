@@ -1,6 +1,7 @@
 // src/navigation/MainNavigator.tsx
 import React from "react";
 import { View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HomeScreen } from "../screens/HomeScreen";
 import { HistoryScreen } from "../screens/HistoryScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
@@ -42,6 +43,7 @@ export function MainNavigator({
   activeTab: externalActiveTab,
   onTabChange: externalOnTabChange,
 }: MainNavigatorProps) {
+  const insets = useSafeAreaInsets();
   const [internalActiveTab, setInternalActiveTab] = React.useState<MainTabScreen>('home');
 
   // Use external state if provided, otherwise use internal state
@@ -77,7 +79,7 @@ export function MainNavigator({
   };
 
   return (
-    <View className="flex-1 bg-background pb-20">
+    <View className="flex-1 bg-background" style={{ paddingBottom: 60 + insets.bottom }}>
         {/* Tab content */}
         {activeTab === 'home' && (
           <HomeScreen

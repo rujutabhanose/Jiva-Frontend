@@ -4,7 +4,9 @@ import { Card } from './ui/Card';
 import { X, Check, Zap, Shield, AlertCircle } from 'lucide-react-native';
 import { usePurchases } from '../hooks/usePurchases';
 import { usePromoCodeRedemption } from '../hooks/usePromoCodeRedemption';
-import { PurchasesPackage } from 'react-native-purchases';
+import { storage } from '../utils/storage';
+import { API_ENDPOINTS } from '../config/api';
+import Purchases, { PurchasesPackage } from 'react-native-purchases';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface UpgradeModalProps {
@@ -26,13 +28,86 @@ export function UpgradeModal({
   scansUsed,
   scansLimit
 }: UpgradeModalProps) {
-  const { offerings, purchasePackage, isLoading: isPurchasing, error: purchaseError, retryFetchOfferings } = usePurchases();
+  const { offerings, purchasePackage, purchaseSubscriptionOption, isLoading: isPurchasing, error: purchaseError, retryFetchOfferings } = usePurchases();
   const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
   const [purchaseErrorMessage, setPurchaseErrorMessage] = useState<string | null>(null);
+  const [promoCode, setPromoCode] = useState('');
+  const [showPromoInput, setShowPromoInput] = useState(false);
   const { redeemCode } = usePromoCodeRedemption((_customerInfo) => {
     if (onUpgradeSuccess) onUpgradeSuccess();
     setTimeout(() => onClose(), 1500);
   });
+
+  const handleAndroidRedeem = async () => {
+    const code = promoCode.trim();
+    if (!code) {
+      Alert.alert('Enter a code', 'Please enter your promo code first.');
+      return;
+    }
+    setIsProcessingPurchase(true);
+    setPurchaseErrorMessage(null);
+    try {
+      const token = await storage.getToken();
+
+      // Step 1: validate coupon and get its offer tag
+      const validateRes = await fetch(API_ENDPOINTS.VALIDATE_COUPON, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ code }),
+      });
+      const validateData = await validateRes.json();
+      if (!validateRes.ok || !validateData.valid) {
+        setPurchaseErrorMessage('Invalid or expired coupon code.');
+        return;
+      }
+
+      const offerTag: string | null = validateData.offer_tag ?? null;
+
+      if (offerTag) {
+        // Step 2: find the yearly package's subscription option tagged with the offer
+        const allOfferings = await Purchases.getOfferings();
+        const current = allOfferings.current;
+        const yearlyPkg = current?.availablePackages.find(
+          pkg => pkg.identifier.includes('annual') || pkg.identifier.includes('year') || pkg.identifier.includes('yearly')
+        );
+        const discountedOption = yearlyPkg?.product.subscriptionOptions?.find(
+          opt => opt.tags.includes(offerTag)
+        );
+
+        if (!discountedOption) {
+          setPurchaseErrorMessage('Discounted offer not available right now. Please try again later.');
+          return;
+        }
+
+        // Step 3: trigger Google Play billing sheet at the discounted price
+        const result = await purchaseSubscriptionOption(discountedOption);
+        if (result.success) {
+          if (onUpgradeSuccess) onUpgradeSuccess();
+          setTimeout(() => onClose(), 1500);
+        } else if (result.message !== 'Purchase was cancelled.') {
+          setPurchaseErrorMessage(result.message);
+        }
+      } else {
+        // No offer tag — grant access directly via backend (e.g. full-access coupons)
+        const redeemRes = await fetch(API_ENDPOINTS.REDEEM_COUPON, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ code }),
+        });
+        const redeemData = await redeemRes.json();
+        if (!redeemRes.ok) {
+          setPurchaseErrorMessage(redeemData.detail || 'Failed to apply coupon.');
+          return;
+        }
+        if (onUpgradeSuccess) onUpgradeSuccess();
+        setTimeout(() => onClose(), 1500);
+      }
+    } catch {
+      setPurchaseErrorMessage('Something went wrong. Please try again.');
+    } finally {
+      setIsProcessingPurchase(false);
+    }
+  };
 
 
   // Derive packages from offerings once, reuse in both the press handlers and the price display
@@ -302,13 +377,50 @@ export function UpgradeModal({
                 </Text>
               </TouchableOpacity>
 
-              {/* iOS-only offer code redemption */}
-              {Platform.OS === 'ios' && (
+              {/* Offer code redemption */}
+              {Platform.OS === 'ios' ? (
                 <TouchableOpacity onPress={() => redeemCode()} style={{ marginTop: 8 }} activeOpacity={0.7}>
                   <Text style={{ textAlign: 'center', color: '#4A7C59', fontSize: 14, textDecorationLine: 'underline' }}>
                     Redeem Offer Code
                   </Text>
                 </TouchableOpacity>
+              ) : (
+                <View style={{ marginTop: 8 }}>
+                  {!showPromoInput ? (
+                    <TouchableOpacity onPress={() => setShowPromoInput(true)} activeOpacity={0.7}>
+                      <Text style={{ textAlign: 'center', color: '#4A7C59', fontSize: 14, textDecorationLine: 'underline' }}>
+                        Redeem Promo Code
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <TextInput
+                        value={promoCode}
+                        onChangeText={setPromoCode}
+                        placeholder="Enter promo code"
+                        autoCapitalize="characters"
+                        autoCorrect={false}
+                        style={{
+                          flex: 1,
+                          borderWidth: 1,
+                          borderColor: '#D1D5DB',
+                          borderRadius: 8,
+                          paddingHorizontal: 12,
+                          paddingVertical: 8,
+                          fontSize: 14,
+                          backgroundColor: '#fff',
+                        }}
+                      />
+                      <TouchableOpacity
+                        onPress={handleAndroidRedeem}
+                        activeOpacity={0.8}
+                        style={{ backgroundColor: '#3F7C4C', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 }}
+                      >
+                        <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Apply</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
               )}
 
               {/* Subscription legal footer — required by App Store & Play Store */}
