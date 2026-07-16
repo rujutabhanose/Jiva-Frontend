@@ -88,7 +88,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [currentScreen, setCurrentScreen] = useState("welcome");
   const [userId, setUserId] = useState("");
   const [scansUsed, setScansUsed] = useState(0);
-  const [isPro, setIsPro] = useState(false);
+  // Pro access can come from two independent sources:
+  //  - the backend (comped/admin accounts, coupons, server-side upgrades) via /me + login
+  //  - RevenueCat entitlements (real App Store / Play Store purchases)
+  // A user is Pro if EITHER says so. RevenueCat must never revoke backend-granted pro,
+  // otherwise comped/admin accounts (which have no store purchase) get downgraded to Free.
+  const [backendIsPremium, setBackendIsPremium] = useState(false);
+  const [revenueCatIsPro, setRevenueCatIsPro] = useState(false);
+  const isPro = backendIsPremium || revenueCatIsPro;
   const [indiaFreeExpiresAt, setIndiaFreeExpiresAt] = useState<string | null>(null);
   const [history, setHistory] = useState<Scan[]>([]);
   const [currentScan, setCurrentScan] = useState<Scan | null>(null);
@@ -122,7 +129,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           console.log('[AppContext] No authentication token found - user must login/register first');
           // Set defaults for unauthenticated state (but keep userId for RevenueCat)
           setScansUsed(0);
-          setIsPro(false);
+          setBackendIsPremium(false);
           setHistory([]);
           setIsLoading(false);
           return;
@@ -153,7 +160,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             console.log('[AppContext] User profile data:', JSON.stringify(data, null, 2));
 
             setScansUsed(data.scans_used || 0);
-            setIsPro(data.is_premium || false);
+            setBackendIsPremium(data.is_premium || false);
             setIndiaFreeExpiresAt(data.india_free_expires_at || null);
 
             // Update local storage with backend data
@@ -175,7 +182,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               if (retryResponse.ok) {
                 const data = await retryResponse.json();
                 setScansUsed(data.scans_used || 0);
-                setIsPro(data.is_premium || false);
+                setBackendIsPremium(data.is_premium || false);
                 setIndiaFreeExpiresAt(data.india_free_expires_at || null);
                 await AsyncStorage.setItem(STORAGE_KEYS.SCANS_USED, (data.scans_used || 0).toString());
                 await AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, data.is_premium ? 'true' : 'false');
@@ -186,7 +193,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               const storedScansUsed = await AsyncStorage.getItem(STORAGE_KEYS.SCANS_USED);
               const storedIsPro = await AsyncStorage.getItem(STORAGE_KEYS.IS_PRO);
               setScansUsed(storedScansUsed ? parseInt(storedScansUsed, 10) : 0);
-              setIsPro(storedIsPro === 'true');
+              setBackendIsPremium(storedIsPro === 'true');
             }
           } else {
             // Other non-200 — fall back to local storage
@@ -194,7 +201,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             const storedScansUsed = await AsyncStorage.getItem(STORAGE_KEYS.SCANS_USED);
             const storedIsPro = await AsyncStorage.getItem(STORAGE_KEYS.IS_PRO);
             setScansUsed(storedScansUsed ? parseInt(storedScansUsed, 10) : 0);
-            setIsPro(storedIsPro === 'true');
+            setBackendIsPremium(storedIsPro === 'true');
           }
         } catch (backendError: any) {
           // Don't fail the app if backend is unavailable - just use local storage
@@ -208,12 +215,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
             const storedScansUsed = await AsyncStorage.getItem(STORAGE_KEYS.SCANS_USED);
             const storedIsPro = await AsyncStorage.getItem(STORAGE_KEYS.IS_PRO);
             setScansUsed(storedScansUsed ? parseInt(storedScansUsed, 10) : 0);
-            setIsPro(storedIsPro === 'true');
+            setBackendIsPremium(storedIsPro === 'true');
           } catch (storageError) {
             console.error('[AppContext] Error reading from storage:', storageError);
             // Use default values
             setScansUsed(0);
-            setIsPro(false);
+            setBackendIsPremium(false);
           }
         }
 
@@ -316,9 +323,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const onCustomerInfoUpdated = (customerInfo: any) => {
       const isProNow = customerInfo.entitlements.active['pro'] !== undefined;
-      console.log('[AppContext] CustomerInfo updated, isPro:', isProNow);
-      setIsPro(isProNow);
-      AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, isProNow ? 'true' : 'false').catch(() => {});
+      console.log('[AppContext] CustomerInfo updated, RevenueCat isPro:', isProNow);
+      // RevenueCat reflects only store purchases. Comped/admin/coupon accounts are premium
+      // via the backend with no store entitlement, so we must NOT let RevenueCat downgrade them.
+      // Only update the RevenueCat source; effective isPro = backendIsPremium || revenueCatIsPro.
+      setRevenueCatIsPro(isProNow);
+      if (isProNow) {
+        AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, 'true').catch(() => {});
+      }
     };
 
     Purchases.addCustomerInfoUpdateListener(onCustomerInfoUpdated);
@@ -515,7 +527,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // not when saving. This ensures users can't bypass the limit by not saving.
 
     if (backendMeta) {
-      setIsPro(backendMeta.is_premium);
+      setBackendIsPremium(backendMeta.is_premium);
       await AsyncStorage.setItem(
         STORAGE_KEYS.IS_PRO,
         backendMeta.is_premium ? 'true' : 'false'
@@ -697,7 +709,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       // Backend confirmed upgrade - now update local state
       console.log('[AppContext DEBUG] upgradeToPro - Setting isPro to true');
-      setIsPro(true);
+      setBackendIsPremium(true);
       await AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, 'true');
       console.log('[AppContext DEBUG] upgradeToPro - Updated AsyncStorage to true');
 
@@ -776,7 +788,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       // Backend confirmed cancellation - now update local state
       console.log('[AppContext DEBUG] cancelSubscription - Setting isPro to false');
-      setIsPro(false);
+      setBackendIsPremium(false);
       await AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, 'false');
 
       // Reset scans used based on backend response
@@ -876,7 +888,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const isPremium = data.is_premium || false;
 
           setScansUsed(scansUsed);
-          setIsPro(isPremium);
+          setBackendIsPremium(isPremium);
           setIndiaFreeExpiresAt(data.india_free_expires_at || null);
           await AsyncStorage.setItem(STORAGE_KEYS.SCANS_USED, scansUsed.toString());
           await AsyncStorage.setItem(STORAGE_KEYS.IS_PRO, isPremium ? 'true' : 'false');
